@@ -4,6 +4,8 @@
 
 > **Où se trouve l’application ?** Le code, l’interface et le mode découverte sont sur la branche [`feature/platform-production-foundation`](https://github.com/Matt95354855/Mass_Classification/tree/feature/platform-production-foundation). La [pull request vers `main`](https://github.com/Matt95354855/Mass_Classification/pull/1) est ouverte. Le présent README donne le parcours utilisateur et la vue d’ensemble ; le [guide technique](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md) détaille les commandes d’exploitation et les limites de chaque composant.
 
+> **Tester sans installation :** [ouvrir la console interactive Classcale IA](https://qv7m2r.matthieu994329.chatgpt.site/application/). Elle reprend l’interface du dépôt et les principaux parcours du mode découverte avec des données fictives. Pour cet essai hébergé, les routes de démonstration sont exécutées dans le navigateur et les imports sont conservés dans son stockage local : **ce n’est pas le serveur Python FastAPI ni la plateforme complète**. N’y importez pas de pièce confidentielle. Utilisez « Réinitialiser » pour retrouver les trois exemples initiaux.
+
 ## Essayer l’interface en quelques minutes
 
 **Pré-requis :** Python 3.11 ou plus récent. Le mode découverte ne demande ni compte, ni Docker, ni téléchargement de modèle. Les trois pièces initiales sont fictives.
