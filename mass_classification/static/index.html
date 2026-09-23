@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#14263b"><link rel="manifest" href="/static/manifest.json">
+<link rel="stylesheet" href="/static/style.css"><title>Mass Classification</title></head>
+<body><header><div><span class="mark">◆</span> Mass Classification <small>Console d’analyse</small></div><span id="connection">Déconnecté</span></header>
+<main>
+<section class="intro"><div><p class="eyebrow">INVESTIGATION · DONNÉES · PREUVES</p><h1>Transformer des volumes de données en pistes vérifiables.</h1>
+<p>Classement, liens documentés, recherche sémantique et revue humaine. Les scores indiquent des priorités de lecture, jamais des conclusions automatiques.</p></div>
+<form id="auth"><label>Clé API <input id="token" type="password" autocomplete="off" placeholder="mc_…" required></label><button>Accéder</button></form></section>
+<div id="notice" role="status" aria-live="polite"></div>
+<nav aria-label="Sections"><button data-page="overview" class="active">Vue d’ensemble</button><button data-page="documents">Documents</button><button data-page="search">Recherche et questions</button><button data-page="graph">Relations</button><button data-page="audit">Audit</button></nav>
+<section id="overview" class="page"><div class="grid"><article class="stat"><small>Documents</small><strong id="doc-count">—</strong></article><article class="stat"><small>Analysés</small><strong id="ready-count">—</strong></article><article class="stat"><small>À traiter</small><strong id="queued-count">—</strong></article></div>
+<article><h2>Importer un document</h2><form id="upload"><label>Fichier local <input type="file" name="file" required></label><label>Source, facultative <input name="source" placeholder="Ex. export bancaire autorisé"></label><button>Importer et analyser</button></form><p class="muted">Le traitement est asynchrone. Le format est contrôlé, les doublons sont reconnus par empreinte.</p></article></section>
+<section id="documents" class="page hidden"><article><div class="section-head"><h2>Documents récents</h2><button id="refresh">Actualiser</button><button id="csv">Exporter CSV</button></div><div id="documents-list"></div></article><article id="detail" class="hidden"><h2>Pièce sélectionnée</h2><div id="detail-content"></div><form id="feedback"><label>Étiquette revue <input name="label" required placeholder="Ex. banking"></label><label>Décision <select name="accepted"><option value="true">Accepter</option><option value="false">Rejeter</option></select></label><label>Commentaire <input name="comment" placeholder="Justification de la revue"></label><button>Enregistrer la revue</button></form><button id="pdf">Exporter le rapport PDF</button></article></section>
+<section id="search" class="page hidden"><article><h2>Recherche fondée sur les pièces</h2><form id="ask"><label>Question <input name="query" minlength="2" maxlength="1000" required placeholder="Quels documents parlent de… ?"></label><button>Rechercher</button></form><p class="muted">Les passages sont cités avec l’ID du document et du segment. Vérifiez le contexte avant de conclure.</p><div id="answer"></div></article></section>
+<section id="graph" class="page hidden"><article><h2>Relations avec élément de preuve</h2><p class="muted">Chaque relation provient d’un passage identifié. Les simples cooccurrences ne sont pas présentées comme relations confirmées.</p><div id="graph-list"></div></article></section>
+<section id="audit" class="page hidden"><article><h2>Journal d’audit</h2><div id="audit-list"></div></article></section>
+</main><footer>Mass Classification · Examen humain obligatoire · Données hébergées par votre instance</footer>
+<script src="/static/app.js" defer></script></body></html>
