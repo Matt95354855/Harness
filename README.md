@@ -17,7 +17,7 @@ python -m pip install -r requirements-demo.txt
 python -m mass_classification.demo
 ```
 
-Ouvrir **http://127.0.0.1:8000/**. Trois documents fictifs apparaissent immédiatement. Essayez de rechercher `virement Nova`, ouvrez une pièce, examinez les relations et enregistrez une revue. Un fichier texte UTF-8 peut également être importé. Le serveur reste accessible uniquement depuis la machine locale ; les données de cet essai sont conservées dans `.mass-demo/`.
+Ouvrir **http://127.0.0.1:8000/**. Trois documents fictifs apparaissent immédiatement. Essayez de rechercher `virement Nova`, ouvrez une pièce, examinez les relations, affichez la chronologie et enregistrez une revue. Un fichier texte UTF-8 peut également être importé. Le serveur reste accessible uniquement depuis la machine locale ; les données de cet essai sont conservées dans `.mass-demo/`.
 
 Le mode découverte utilise une recherche textuelle et des règles simples. Pour exécuter le traitement complet (OCR, embeddings, PostgreSQL, modèles et worker), suivre les [instructions Docker sur la branche de l’application](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md#démarrage).
 
@@ -79,6 +79,23 @@ flowchart TD
 | [Guide de conception fourni](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/GUIDE_CONSTRUCTION_PLATEFORME_COMPLETE.md) | Texte de référence ayant servi à définir le périmètre ; il est conservé pour la traçabilité |
 
 Le guide de conception et le README technique ont des rôles différents : le premier expose des pistes et hypothèses, le second décrit le comportement du code et ses limites.
+
+## Fonctionnalités étendues
+
+Les priorités **Should Have** et **Nice to Have** du guide sont suivies dans une [matrice détaillée du guide technique](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md#extensions-should-have-et-nice-to-have). Voici ce qu’un utilisateur peut essayer ou intégrer dès maintenant :
+
+| Fonction | Parcours disponible | Condition ou limite |
+| --- | --- | --- |
+| Chronologie et carte | Onglets **Chronologie** et **Relations** ; dates sources distinguées des dates d’import | Les dates et liens doivent être vérifiés dans les pièces |
+| Recherche et question-réponse | Passages cités dans la console et l’API | Recherche lexicale en découverte, embeddings dans le service complet |
+| Explications | Décomposition de la priorité ; calcul SHAP à la demande en mode complet | SHAP explique le score des règles, pas la fraude ni le réseau neuronal |
+| Identités | Suggestions de doublons ; fusion explicite par administrateur avec alias | Comparaison bornée ; aucune fusion automatique |
+| Adaptation par dossier | Entraînement hors ligne d’embeddings et réindexation tenant par tenant | Paires annotées, validation et fenêtre de maintenance nécessaires |
+| Consultation sur mobile et hors ligne | Interface responsive installable comme PWA ; page d’exemple fictif hors ligne | Aucun document réel mis en cache, aucune application native |
+| Accélération et orchestration | CUDA optionnel ; références Kubernetes (API, worker, HPA et politique réseau) | GPU, cluster, secrets, stockage et essais de charge à fournir |
+| Audit | Événements liés par empreintes par espace et point de vérification | Ancrage externe requis face à un administrateur de base de données |
+
+Une partie du guide décrit des objectifs de recherche : modèles supervisés, temps réel garanti, prévisions d’actions ou qualité validée sur des données métier. Leur architecture ou des fonctions utilitaires existent, mais **aucune performance ni fiabilité métier n’est revendiquée sans données annotées et essais indépendants**.
 
 ## Niveau de maturité
 
