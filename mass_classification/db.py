@@ -61,8 +61,9 @@ def event_hash(previous: str, tenant: str, event: dict) -> str:
 
 def audit(conn, tenant: str, actor: str, action: str, subject: str, details: dict | None = None) -> None:
     from psycopg.types.json import Jsonb
-    # Lock the tenant row so concurrent API/worker writes cannot fork its chain.
-    conn.execute("SELECT id FROM tenants WHERE id=%s FOR UPDATE", (tenant,))
+    # Separate per-tenant lock avoids serializing unrelated search/model reads.
+    conn.execute("INSERT INTO audit_heads(tenant_id) VALUES (%s) ON CONFLICT DO NOTHING", (tenant,))
+    conn.execute("SELECT tenant_id FROM audit_heads WHERE tenant_id=%s FOR UPDATE", (tenant,))
     previous = conn.execute("SELECT sequence,event_hash FROM audit_chain WHERE tenant_id=%s ORDER BY sequence DESC LIMIT 1",
                             (tenant,)).fetchone()
     row = conn.execute("INSERT INTO audit_events(tenant_id,actor,action,subject,details) VALUES (%s,%s,%s,%s,%s) "

@@ -5,6 +5,9 @@ CREATE TABLE IF NOT EXISTS audit_chain (
   previous_hash text NOT NULL, event_hash text NOT NULL,
   PRIMARY KEY (tenant_id, sequence)
 );
+CREATE TABLE IF NOT EXISTS audit_heads (
+  tenant_id text PRIMARY KEY REFERENCES tenants(id)
+);
 CREATE TABLE IF NOT EXISTS entity_aliases (
   tenant_id text NOT NULL REFERENCES tenants(id), kind text NOT NULL,
   alias text NOT NULL, entity_id uuid NOT NULL REFERENCES entities(id),
