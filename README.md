@@ -1,108 +1,130 @@
 # Mass Classification
 
-**Plateforme de classification et d’exploration de données à grande échelle, pensée pour l’analyse de transactions bancaires et de dossiers d’enquête.**
+**Une plateforme Python pour importer, classer et explorer des pièces documentaires avec leur provenance.** Elle s’adresse à l’analyse de dossiers financiers et d’enquête : les documents deviennent recherchables, les relations entre entités renvoient à des passages sources, et les analystes consignent leur revue. Les scores servent à organiser le travail ; ils ne prouvent ni fraude, ni intention, ni crédibilité.
 
-Mass Classification transforme des fichiers et des flux hétérogènes en informations consultables : documents classés, entités repérées, relations rattachées à leurs sources, passages retrouvables et pistes à examiner. L’objectif est d’aider un analyste à **retrouver, comprendre et vérifier** l’information dans un ensemble de pièces volumineux.
+> **Où se trouve l’application ?** Le code, l’interface et le mode découverte sont sur la branche [`feature/platform-production-foundation`](https://github.com/Matt95354855/Mass_Classification/tree/feature/platform-production-foundation). La [pull request vers `main`](https://github.com/Matt95354855/Mass_Classification/pull/1) est ouverte. Le présent README donne le parcours utilisateur et la vue d’ensemble ; le [guide technique](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md) détaille les commandes d’exploitation et les limites de chaque composant.
 
-> **État du dépôt :** l’application et son mode découverte sont disponibles sur la branche [`feature/platform-production-foundation`](https://github.com/Matt95354855/Mass_Classification/tree/feature/platform-production-foundation). Sa [pull request vers `main`](https://github.com/Matt95354855/Mass_Classification/pull/1) est ouverte. Le mode découverte fonctionne sans compte, Docker ni modèle à télécharger.
+## Essayer l’interface en quelques minutes
 
-## Essayer l’application
-
-Cloner le dépôt, installer les dépendances légères de découverte et lancer le serveur :
+**Pré-requis :** Python 3.11 ou plus récent. Le mode découverte ne demande ni compte, ni Docker, ni téléchargement de modèle. Les trois pièces initiales sont fictives.
 
 ```bash
 git clone --branch feature/platform-production-foundation --single-branch https://github.com/Matt95354855/Mass_Classification.git
 cd Mass_Classification
+python -m venv .venv
+source .venv/bin/activate                 # Windows : .venv\Scripts\activate
 python -m pip install -r requirements-demo.txt
 python -m mass_classification.demo
 ```
 
-Ouvrir **http://127.0.0.1:8000/**. Trois documents fictifs apparaissent immédiatement. Essayez de rechercher `virement Nova`, ouvrez une pièce, examinez les relations, affichez la chronologie et enregistrez une revue. Un fichier texte UTF-8 peut également être importé. Le serveur reste accessible uniquement depuis la machine locale ; les données de cet essai sont conservées dans `.mass-demo/`.
+Ouvrir **http://127.0.0.1:8000/**, puis :
 
-Le mode découverte utilise une recherche textuelle et des règles simples. Pour exécuter le traitement complet (OCR, embeddings, PostgreSQL, modèles et worker), suivre les [instructions Docker sur la branche de l’application](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md#démarrage).
+1. Rechercher `virement Nova` et ouvrir un passage retrouvé pour vérifier sa pièce.
+2. Consulter **Relations** et **Chronologie** : les liens proviennent de passages, les dates déclarées par la source sont distinguées des dates d’import.
+3. Ouvrir une pièce, regarder la priorité et ses contributions, puis enregistrer une revue.
+4. Importer, si souhaité, un fichier UTF-8 `.txt`, `.md`, `.csv`, `.tsv`, `.json` ou `.eml` de **5 Mio maximum** ; exporter ensuite un inventaire CSV ou un rapport PDF.
 
-## Pourquoi ce projet ?
+Le serveur d’essai écoute sur `127.0.0.1`. Ses imports et revues sont enregistrés dans `.mass-demo/` sur votre machine. Pour repartir de zéro, arrêter le serveur puis supprimer ce dossier **en sachant que cela efface aussi vos imports et revues locaux**. Pour changer de port : `python -m mass_classification.demo --port 8080`.
 
-Dans une enquête financière ou documentaire, l’information arrive sous des formes différentes : lignes de transactions, relevés, courriels, PDF, images, enregistrements et données structurées. Les volumes rendent difficile la lecture exhaustive et les liens utiles se perdent entre les pièces.
+Le mode découverte réalise une **recherche lexicale** et une analyse par règles. Il n’exécute pas l’OCR, la transcription, les embeddings multilingues ou le réseau neuronal de la plateforme complète. Sa bannière le rappelle dans l’interface.
 
-La plateforme vise à répondre à quatre besoins :
+## Comprendre les deux modes
 
-1. **Rassembler** les données autorisées dans un espace de travail contrôlé.
-2. **Structurer** le contenu en textes, entités, dates, montants et relations documentées.
-3. **Retrouver** les passages pertinents et expliquer d’où vient chaque résultat.
-4. **Faire examiner** les pistes et les corrections par une personne responsable du dossier.
-
-### Exemples d’utilisation
-
-| Situation | Ce que la plateforme aide à faire | Ce qu’elle ne conclut pas seule |
+| | Découverte locale | Service complet |
 | --- | --- | --- |
-| Des milliers de transactions et de justificatifs | Retrouver des montants, classer les pièces et relier les références présentes dans les documents | Qu’une transaction est frauduleuse |
-| Un dossier contenant courriels, PDF et captures d’écran | Rechercher un nom ou un événement dans plusieurs formats et ouvrir le passage source | Que deux personnes ont réellement une relation parce qu’elles apparaissent dans une même pièce |
-| Des publications et événements horodatés provenant d’une source autorisée | Comparer leur contenu et leur chronologie pour orienter une revue | Qu’une campagne coordonnée ou une intention est prouvée |
+| Mise en route | Python et `requirements-demo.txt` | Docker Compose, PostgreSQL/pgvector, Redis, volumes et modèles |
+| Accès | Sans authentification, sur la machine locale | Clés API par espace de travail et rôles `admin`, `analyst`, `reader` |
+| Données | Trois exemples fictifs et fichiers texte importés localement | Fichiers texte, documents, images, audio et vidéo selon les extracteurs |
+| Recherche | Correspondance lexicale des passages | Embeddings multilingues, segments et recherche vectorielle |
+| Traitement | Immédiat pour les petits fichiers autorisés | Worker avec tâches persistantes, baux et tentatives de reprise |
+| Résultats | Règles simplifiées et preuves consultables | NLP, règles, graphe, topologie ; prédictions TNN uniquement avec poids approuvés |
 
-## Comment fonctionne l’analyse ?
+### Démarrer le service complet
+
+Créer `.env` à partir de l’exemple et **remplacer** `POSTGRES_PASSWORD` ainsi que le mot de passe dans `DATABASE_URL` par la même valeur. Configurer `ALLOWED_ORIGINS` selon votre domaine. Le premier lancement peut télécharger des modèles : prévoir le temps et l’espace disque nécessaires, ou les précharger pour un environnement isolé.
+
+```bash
+cp .env.example .env
+# Modifier .env et conserver les secrets hors du dépôt.
+docker compose build
+docker compose up -d db redis
+docker compose run --rm api python -m mass_classification.admin create-key --tenant default --role admin
+# Conserver la clé mc_... affichée une seule fois dans un coffre de secrets.
+docker compose up -d api worker
+curl http://127.0.0.1:8000/health/ready
+```
+
+L’interface est à **http://127.0.0.1:8000/** et la documentation interactive de l’API à `/docs`. Compose lie l’API à la boucle locale ; pour un accès réseau, l’exploitant doit fournir HTTPS, authentification réseau et stockage adapté. L’exemple ci-dessous nécessite un fichier `exemple.txt` existant :
+
+```bash
+export MASS_API_KEY='mc_...'
+curl -H "Authorization: Bearer $MASS_API_KEY" \
+  -F file=@exemple.txt \
+  -F 'source_json={"case":"D-17","event_at":"2026-04-14T10:30:00+02:00"}' \
+  http://127.0.0.1:8000/v1/documents
+curl -H "Authorization: Bearer $MASS_API_KEY" http://127.0.0.1:8000/v1/documents
+curl -H "Authorization: Bearer $MASS_API_KEY" \
+  -H 'Content-Type: application/json' -d '{"query":"virement inhabituel"}' \
+  http://127.0.0.1:8000/v1/ask
+```
+
+L’import répond `202`. La pièce passe par `queued`, `processing`, puis `ready` ou `failed`. Une pièce identique dans le même espace renvoie son identifiant existant. Le service de questions-réponses restitue des extraits et leurs références : il ne génère pas de conclusion libre.
+
+## Du fichier à la revue
 
 ```mermaid
 flowchart TD
-    A["Sources autorisées"] --> B["Ingestion et extraction"]
-    B --> C["Segments, entités et métadonnées"]
-    C --> D["Recherche et graphe de relations"]
-    D --> E["Classement et signaux explicables"]
+    A["Pièce et provenance"] --> B["Extraction et segments"]
+    B --> C["NLP et embeddings"]
+    C --> D["Recherche et graphe sourcé"]
+    D --> E["Priorité et explications"]
     E --> F["Revue humaine et audit"]
 ```
 
-**1. Ingestion.** Les fichiers sont reçus par API ou par connecteur. Leur empreinte permet de retrouver les doublons dans un même espace de travail. Le traitement se poursuit en arrière-plan.
+- **Ingestion.** L’API borne la taille des fichiers, calcule leur empreinte SHA-256, détecte les doublons dans l’espace de travail et confie le traitement à un worker.
+- **Extraction.** Selon le format, le worker récupère le texte de documents structurés ou de courriels, effectue de l’OCR pour certaines images et PDF, et peut transcrire audio et vidéo. Une extraction impossible est signalée ; aucun texte n’est inventé.
+- **Indexation.** Les passages sont stockés dans PostgreSQL avec des vecteurs multilingues de 384 dimensions. Un modèle d’embeddings adapté peut être entraîné et réindexé séparément pour un espace de travail.
+- **Analyse.** Des règles et outils NLP détectent langue, entités, montants et relations explicites avec leur extrait justificatif. Le graphe et ses caractéristiques topologiques décrivent des liens *extraits*, à vérifier dans leur contexte.
+- **Restitution.** La console rassemble documents, recherche, carte des relations, chronologie, contributions du score, revues et exports. Les actions sont enregistrées dans un journal vérifiable pour les nouveaux événements.
 
-**2. Extraction.** Le texte est extrait de formats courants. L’OCR traite les images et certains PDF scannés ; les composants audio et vidéo utilisent une transcription locale quand ils sont configurés.
+### Ce qui est disponible et ce qui reste conditionnel
 
-**3. Indexation.** Les documents sont découpés en passages. Un modèle d’embeddings multilingues permet de rechercher par sens, en plus des métadonnées conservées avec la pièce.
-
-**4. Analyse.** Des règles et outils NLP repèrent des entités, montants et relations avec leur passage justificatif. Un graphe aide à explorer ces liens. Des calculs topologiques et une architecture de réseau neuronal topologique sont prévus pour des cas validés par des données annotées.
-
-**5. Restitution.** L’API et la console présentent les résultats, les pièces sources, les exports et les décisions de revue. La question-réponse actuelle restitue des extraits cités ; elle ne rédige pas une synthèse libre sans preuve.
-
-## Principes du projet
-
-- **Traçabilité :** un résultat utile doit pointer vers une pièce et, si possible, vers un passage précis.
-- **Séparation des dossiers :** clés d’accès, rôles et filtrage des données par espace de travail (`tenant`).
-- **Contrôle humain :** les signaux orientent la lecture ; ils ne prononcent ni culpabilité, ni fraude, ni crédibilité.
-- **Déploiement maîtrisé :** services Python, PostgreSQL/pgvector et Redis, avec stockage et modèles sous le contrôle de l’exploitant.
-- **Progression mesurée :** les performances, la qualité des modèles et la capacité à traiter des millions de pièces doivent être testées sur les données et l’infrastructure visées.
-
-## Où trouver l’implémentation ?
-
-| Ressource | Contenu |
-| --- | --- |
-| [Guide technique](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md) | Installation, API, connecteurs, modèles, exploitation et limites détaillées |
-| [Code Python](https://github.com/Matt95354855/Mass_Classification/tree/feature/platform-production-foundation/mass_classification) | API, worker, extraction, analyse, topologie et interface |
-| [Mode découverte](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/mass_classification/demo.py) | Serveur local et pièces synthétiques pour essayer le parcours utilisateur |
-| [Guide de conception fourni](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/GUIDE_CONSTRUCTION_PLATEFORME_COMPLETE.md) | Texte de référence ayant servi à définir le périmètre ; il est conservé pour la traçabilité |
-
-Le guide de conception et le README technique ont des rôles différents : le premier expose des pistes et hypothèses, le second décrit le comportement du code et ses limites.
-
-## Fonctionnalités étendues
-
-Les priorités **Should Have** et **Nice to Have** du guide sont suivies dans une [matrice détaillée du guide technique](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md#extensions-should-have-et-nice-to-have). Voici ce qu’un utilisateur peut essayer ou intégrer dès maintenant :
-
-| Fonction | Parcours disponible | Condition ou limite |
+| Domaine | Capacité dans le dépôt | Condition ou limite |
 | --- | --- | --- |
-| Chronologie et carte | Onglets **Chronologie** et **Relations** ; dates sources distinguées des dates d’import | Les dates et liens doivent être vérifiés dans les pièces |
-| Recherche et question-réponse | Passages cités dans la console et l’API | Recherche lexicale en découverte, embeddings dans le service complet |
-| Explications | Décomposition de la priorité ; calcul SHAP à la demande en mode complet | SHAP explique le score des règles, pas la fraude ni le réseau neuronal |
-| Identités | Suggestions de doublons ; fusion explicite par administrateur avec alias | Comparaison bornée ; aucune fusion automatique |
-| Adaptation par dossier | Entraînement hors ligne d’embeddings et réindexation tenant par tenant | Paires annotées, validation et fenêtre de maintenance nécessaires |
-| Consultation sur mobile et hors ligne | Interface responsive installable comme PWA ; page d’exemple fictif hors ligne | Aucun document réel mis en cache, aucune application native |
-| Accélération et orchestration | CUDA optionnel ; références Kubernetes (API, worker, HPA et politique réseau) | GPU, cluster, secrets, stockage et essais de charge à fournir |
-| Audit | Événements liés par empreintes par espace et point de vérification | Ancrage externe requis face à un administrateur de base de données |
+| Classification | Priorité par règles et architecture TNN avec attention multi-tête, têtes de classes et score | Le TNN ne prédit rien sans checkpoint entraîné et approuvé ; aucun score n’est une probabilité de fraude validée |
+| Explications | Termes repérés, contributions par règles et SHAP exact sur la priorité `rules:v1` en mode complet | SHAP explique le calcul de cette règle, pas une cause ni le TNN |
+| Graphe et temps | Relations sourcées, homologie persistante bornée, chronologie avec provenance des dates | Noms similaires seulement proposés ; fusion par administrateur après vérification ; date d’import étiquetée séparément |
+| Recherche et échanges | Recherche vectorielle et réponse par extraits cités dans le service complet | La qualité dépend des données et du modèle ; pas de synthèse générative ni de vérification automatique des faits |
+| Flux et médias | Connecteurs fichiers, RSS, S3, SQL, MongoDB, SFTP et Kafka ; extraction images, audio et vidéo | Sources et permissions à configurer ; worker et rafraîchissement régulier sans garantie de latence temps réel |
+| Déploiement | Compose, manifestes Kubernetes de référence, option CUDA, métriques et vérification du journal | GPU, cluster, stockage partagé, secrets, TLS et ancrage externe d’audit à fournir et à tester |
+| Mobilité et hors ligne | Console responsive, PWA et page d’exemple fictif accessible hors ligne | Pas d’application native ; aucun dossier sensible, résultat API ou document réel dans le cache hors ligne |
 
-Une partie du guide décrit des objectifs de recherche : modèles supervisés, temps réel garanti, prévisions d’actions ou qualité validée sur des données métier. Leur architecture ou des fonctions utilitaires existent, mais **aucune performance ni fiabilité métier n’est revendiquée sans données annotées et essais indépendants**.
+Le [guide technique](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md#extensions-should-have-et-nice-to-have) reprend **chaque point Should Have et Nice to Have** du document de conception, avec son état précis. Le [guide de conception initial](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/GUIDE_CONSTRUCTION_PLATEFORME_COMPLETE.md) contient aussi des idées et des hypothèses qui ne doivent pas être confondues avec une capacité mesurée du code.
 
-## Niveau de maturité
+## API, accès et traçabilité
 
-La branche de l’application contient une première architecture testée en CI : ingestion, extraction, recherche, relations sourcées, API, interface, journal d’audit et conteneur Docker. Elle n’a **pas** fait l’objet d’une validation de bout en bout sur une infrastructure bancaire ou policière réelle.
+| Action | Route principale | Accès |
+| --- | --- | --- |
+| Déposer et suivre une pièce | `POST /v1/documents`, `GET /v1/documents` | Écriture : admin ou analyst ; lecture : tout rôle du même espace |
+| Lire l’analyse et l’explication | `GET /v1/documents/{id}`, `GET /v1/documents/{id}/explanation` | Tout rôle du même espace |
+| Retrouver des passages | `POST /v1/search`, `POST /v1/ask` | Tout rôle du même espace |
+| Explorer les liens et dates | `GET /v1/graph`, `GET /v1/timeline` | Tout rôle du même espace |
+| Examiner les doublons d’entités | `GET /v1/entities/candidates`, `POST /v1/entities/merge` | Suggestions : admin/analyst ; fusion : admin |
+| Consigner une revue et exporter | `POST /v1/documents/{id}/feedback`, routes `/v1/exports` et `/report.pdf` | Admin ou analyst |
+| Auditer et surveiller | `GET /v1/audit`, `GET /v1/audit/verify`, `GET /v1/monitoring`, `/metrics` | Admin |
 
-Avant toute utilisation sensible, il faut notamment fournir les jeux de données annotés, vérifier les modèles et leurs erreurs, tester l’isolation et les sauvegardes, mesurer la charge, configurer TLS et les secrets, et définir les règles de conservation des données. Si aucun modèle topologique approuvé n’est installé, l’API indique que sa prédiction est indisponible.
+Les clés sont liées à un espace (`tenant`) et à un rôle. Les requêtes applicatives filtrent les données par espace ; Redis limite les appels par clé. Le journal associe les **nouveaux** événements à une chaîne SHA-256 par espace. La route de vérification détecte certaines altérations, mais un administrateur de base de données pourrait réécrire toute la chaîne : exporter périodiquement son empreinte finale vers un support externe si cette menace doit être couverte. Les événements antérieurs à la migration sont signalés séparément.
 
-## Participer
+## Vérifier et contribuer
 
-Les propositions sont bienvenues lorsqu’elles ajoutent des tests reproductibles et expliquent la provenance des données utilisées. Ne publiez pas de transactions réelles, dossiers d’enquête, clés d’accès ou modèles non autorisés dans le dépôt.
+```bash
+python -m pip install -e '.[test,topology]'
+python -m compileall -q mass_classification
+python -m pytest -q
+```
+
+La CI exécute les tests et construit l’image Docker. Les tests couvrent notamment l’essai local, la provenance des dates, les suggestions d’entités, les règles et des invariants d’audit. La validation de bout en bout avec PostgreSQL, Redis, médias réels et charge de production nécessite une infrastructure représentative. Le [guide technique](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md) décrit les modèles, la réindexation par espace, les commandes d’exploitation et les limites.
+
+**Avant tout usage sensible**, constituer des jeux annotés, évaluer les erreurs des modèles, tester les droits entre espaces, les restaurations et la montée en charge, définir la conservation des pièces, puis configurer secrets, chiffrement et TLS. Les coûts, latences et volumes envisagés dans le guide de conception sont des objectifs à mesurer, pas des résultats acquis.
+
+Voir [LICENSE](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/LICENSE) pour la licence. Ne publier ni données bancaires réelles, ni dossiers d’enquête, ni clés d’accès dans les contributions.
