@@ -58,7 +58,7 @@ curl -s -H 'Content-Type: application/json' \
   -d '{"query":"Alice Martin"}' http://127.0.0.1:8080/v1/ask
 ```
 
-Le serveur conserve les imports et revues dans `.mass-demo-essai/`. Les réponses suivantes changent si vous y ajoutez des pièces. Le test automatisé de ce parcours passe aussi avec `python -m pytest -q tests/test_demo.py` (**1 test réussi** dans cet environnement). Le service complet avec PostgreSQL, Redis, OCR, embeddings et worker n’a pas été exécuté lors de cet essai : Docker n’était pas disponible dans l’environnement de vérification.
+Le serveur conserve les imports et revues dans `.mass-demo-essai/`. Les réponses suivantes changent si vous y ajoutez des pièces. Les tests ciblés `tests/test_api.py` et `tests/test_demo.py` ont passé (**3 tests réussis**, avec les dépendances de test locales). La suite entière n'a pas pu être collectée dans cet environnement faute de `numpy` ; cela ne constitue pas un échec fonctionnel établi des autres modules. Le service complet avec PostgreSQL, Redis, OCR, embeddings et worker n’a pas été exécuté lors de cet essai : Docker n’était pas disponible dans l’environnement de vérification.
 
 ## Comprendre les deux modes
 
