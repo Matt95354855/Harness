@@ -59,7 +59,7 @@ flowchart TD
 | Ressource | Contenu |
 | --- | --- |
 | [Pull request #1](https://github.com/Matt95354855/Mass_Classification/pull/1) | Modifications proposées vers `main`, tests et état de la revue |
-| [README technique de la branche de travail](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/README.md) | Installation, API, connecteurs, modèles, exploitation et limites détaillées |
+| [README technique de la branche de travail](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md) | Installation, API, connecteurs, modèles, exploitation et limites détaillées |
 | [Code Python](https://github.com/Matt95354855/Mass_Classification/tree/feature/platform-production-foundation/mass_classification) | API, worker, extraction, analyse, topologie et interface |
 | [Guide de conception fourni](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/GUIDE_CONSTRUCTION_PLATEFORME_COMPLETE.md) | Texte de référence ayant servi à définir le périmètre ; il est conservé pour la traçabilité |
 
