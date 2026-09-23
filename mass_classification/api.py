@@ -19,7 +19,7 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 import time
 
 from .config import settings
-from .db import migrate, transaction, audit
+from .db import migrate, transaction, audit, verify_audit, tenant_embedding
 
 
 @asynccontextmanager
@@ -123,7 +123,7 @@ def home():
 
 @app.get("/static/{filename}")
 def asset(filename: str):
-    if filename not in {"app.js", "style.css", "manifest.json", "sw.js", "icon.svg"}:
+    if filename not in {"app.js", "style.css", "manifest.json", "sw.js", "icon.svg", "offline.html"}:
         raise HTTPException(404)
     return FileResponse(Path(__file__).parent / "static" / filename)
 
@@ -210,6 +210,89 @@ def document(doc_id: uuid.UUID, user: Principal = Depends(principal)):
                 "analysis": analysis}
 
 
+@app.get("/v1/documents/{doc_id}/explanation")
+def explanation(doc_id: uuid.UUID, user: Principal = Depends(principal)):
+    """On-demand SHAP of the explicit rule priority; optional train extra required."""
+    throttle(user, "read")
+    with transaction() as conn:
+        get_document(conn, user, doc_id)
+        row = conn.execute("SELECT labels,signals,explanation FROM analyses WHERE tenant_id=%s AND document_id=%s",
+                           (user.tenant, doc_id)).fetchone()
+    if not row:
+        raise HTTPException(409, "Analysis not ready")
+    if row["labels"].get("method") != "rules:v1":
+        raise HTTPException(409, "SHAP is only configured for the rules:v1 score")
+    try:
+        from .explain import explain_priority
+        return explain_priority(row["signals"], row["labels"], row["explanation"])
+    except ImportError as exc:
+        raise HTTPException(503, "Install the train extra to enable SHAP") from exc
+
+
+@app.get("/v1/timeline")
+def timeline(limit: int = 100, user: Principal = Depends(principal)):
+    from .temporal import timeline as build_timeline
+    if not 1 <= limit <= 250:
+        raise HTTPException(422, "Invalid limit")
+    throttle(user, "read")
+    with transaction() as conn:
+        rows = conn.execute("SELECT id,filename,status,source,created_at FROM documents WHERE tenant_id=%s "
+                            "ORDER BY created_at DESC LIMIT %s", (user.tenant, limit)).fetchall()
+    return build_timeline(rows)
+
+
+@app.get("/v1/entities/candidates")
+def entity_candidates(user: Principal = Depends(require("admin", "analyst"))):
+    from .entities import candidates
+    throttle(user, "read")
+    with transaction() as conn:
+        rows = conn.execute("SELECT id,canonical,kind FROM entities WHERE tenant_id=%s "
+                            "ORDER BY canonical,id LIMIT 250", (user.tenant,)).fetchall()
+    return candidates(rows)
+
+
+class EntityMerge(BaseModel):
+    source_id: uuid.UUID
+    target_id: uuid.UUID
+
+
+@app.post("/v1/entities/merge")
+def merge_entities(payload: EntityMerge, user: Principal = Depends(require("admin"))):
+    """Merge only after review; preserve original spelling as an alias and audit the operation."""
+    if payload.source_id == payload.target_id:
+        raise HTTPException(422, "Select two distinct entities")
+    throttle(user, "merge", 10)
+    with transaction() as conn:
+        rows = conn.execute("SELECT id,canonical,kind FROM entities WHERE tenant_id=%s AND id=ANY(%s) "
+                            "ORDER BY id FOR UPDATE", (user.tenant, [payload.source_id, payload.target_id])).fetchall()
+        by_id = {row["id"]: row for row in rows}
+        src, dst = by_id.get(payload.source_id), by_id.get(payload.target_id)
+        if not src or not dst:
+            raise HTTPException(404, "Entity not found")
+        if src["kind"] != dst["kind"]:
+            raise HTTPException(422, "Entity types differ")
+        conflict = conn.execute("SELECT entity_id FROM entity_aliases WHERE tenant_id=%s AND kind=%s AND alias=%s",
+                                (user.tenant, src["kind"], src["canonical"])).fetchone()
+        if conflict and conflict["entity_id"] != dst["id"]:
+            raise HTTPException(409, "Alias already assigned")
+        conn.execute("INSERT INTO mentions(tenant_id,document_id,entity_id,start_offset,end_offset) "
+                     "SELECT tenant_id,document_id,%s,start_offset,end_offset FROM mentions "
+                     "WHERE tenant_id=%s AND entity_id=%s ON CONFLICT DO NOTHING", (dst["id"], user.tenant, src["id"]))
+        conn.execute("DELETE FROM mentions WHERE tenant_id=%s AND entity_id=%s", (user.tenant, src["id"]))
+        for field in ("source_id", "target_id"):
+            conn.execute(f"UPDATE relations SET {field}=%s WHERE tenant_id=%s AND {field}=%s",
+                         (dst["id"], user.tenant, src["id"]))
+        conn.execute("UPDATE entity_aliases SET entity_id=%s WHERE tenant_id=%s AND entity_id=%s",
+                     (dst["id"], user.tenant, src["id"]))
+        conn.execute("INSERT INTO entity_aliases(tenant_id,kind,alias,entity_id,reviewer_key_id) "
+                     "VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+                     (user.tenant, src["kind"], src["canonical"], dst["id"], user.key_id))
+        conn.execute("DELETE FROM entities WHERE id=%s AND tenant_id=%s", (src["id"], user.tenant))
+        audit(conn, user.tenant, str(user.key_id), "entity_merged", str(dst["id"]),
+              {"source_id": str(src["id"]), "alias": src["canonical"]})
+    return {"canonical_id": dst["id"], "alias": src["canonical"]}
+
+
 class SearchQuery(BaseModel):
     query: str = Field(min_length=2, max_length=1000)
     limit: int = Field(default=5, ge=1, le=20)
@@ -219,8 +302,12 @@ class SearchQuery(BaseModel):
 def search(payload: SearchQuery, user: Principal = Depends(principal)):
     from .embedding import embed
     throttle(user, "search", 30)
-    vector = embed([payload.query], settings().embedding_model)[0]
     with transaction() as conn:
+        model_name = tenant_embedding(conn, user.tenant)
+    vector = embed([payload.query], model_name)[0]
+    with transaction() as conn:
+        if tenant_embedding(conn, user.tenant, lock=True) != model_name:
+            raise HTTPException(409, "Embedding model changed during search; retry")
         rows = conn.execute("SELECT c.document_id,c.ordinal,c.text,d.filename, 1-(c.embedding<=>%s) AS similarity "
                             "FROM chunks c JOIN documents d ON d.id=c.document_id AND d.tenant_id=c.tenant_id "
                             "WHERE c.tenant_id=%s AND c.embedding IS NOT NULL AND d.status='ready' "
@@ -280,6 +367,13 @@ def audit_log(limit: int = 100, user: Principal = Depends(require("admin"))):
     with transaction() as conn:
         return conn.execute("SELECT actor,action,subject,details,created_at FROM audit_events WHERE tenant_id=%s "
                             "ORDER BY id DESC LIMIT %s", (user.tenant, limit)).fetchall()
+
+
+@app.get("/v1/audit/verify")
+def audit_verify(user: Principal = Depends(require("admin"))):
+    throttle(user, "read")
+    with transaction() as conn:
+        return verify_audit(conn, user.tenant)
 
 
 @app.get("/v1/monitoring")

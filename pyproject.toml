@@ -22,6 +22,7 @@ dependencies = [
 [project.optional-dependencies]
 topology = ["gudhi>=3.10,<4", "torch>=2.4,<3"]
 train = ["torch>=2.4,<3", "shap>=0.46,<1"]
+explain = ["shap>=0.46,<1"]
 test = ["pytest>=8,<10", "httpx>=0.27,<1"]
 
 [project.scripts]
@@ -29,6 +30,7 @@ mass-worker = "mass_classification.worker:main"
 mass-train = "mass_classification.training:main"
 mass-connector = "mass_classification.connectors:main"
 mass-tune-embeddings = "mass_classification.tune_embeddings:main"
+mass-reindex = "mass_classification.reindex:main"
 
 [tool.setuptools.package-data]
 mass_classification = ["static/*", "migrations/*.sql"]

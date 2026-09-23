@@ -83,10 +83,12 @@ def classify(features: dict, text: str) -> tuple[dict, dict]:
     hits = {label: [word for word in words if word in terms] for label, words in rules.items()}
     labels = {label: min(0.95, 0.25 + len(matches) * 0.18) for label, matches in hits.items() if matches}
     # Heuristic queue priority, not fraud probability or credibility rating.
-    priority = min(100, features["money_mentions"] * 8 + len(labels) * 4 + len(re.findall(r"\b(?:urgent|immédiat)\b", terms)) * 2)
+    urgency = len(re.findall(r"\b(?:urgent|immédiat)\b", terms))
+    priority = min(100, features["money_mentions"] * 8 + len(labels) * 4 + urgency * 2)
     return {"domain_scores": labels, "review_priority": priority, "method": "rules:v1"}, {
         "matched_terms": {k: v for k, v in hits.items() if v},
-        "priority_contributions": {"money_mentions": features["money_mentions"] * 8, "domains": len(labels) * 4},
+        "priority_contributions": {"money_mentions": features["money_mentions"] * 8, "domains": len(labels) * 4, "urgency_mentions": urgency * 2},
+        "urgency_mentions": urgency,
         "limitations": "Rules flag documents for human review; they do not establish fraud, intent or credibility.",
     }
 

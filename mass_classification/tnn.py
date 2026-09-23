@@ -35,6 +35,7 @@ class TopologicalNetwork(nn.Module):
         self.edge_in = nn.Linear(input_dim, hidden)
         self.face_in = nn.Linear(input_dim, hidden)
         self.layers = nn.ModuleList([SimplicialLayer(hidden) for _ in range(2)])
+        self.self_attention = nn.MultiheadAttention(hidden, num_heads=4, batch_first=True)
         self.attention = nn.Linear(hidden, 1)
         self.classifier = nn.Linear(hidden, num_classes)
         self.risk = nn.Linear(hidden, 1)
@@ -47,6 +48,8 @@ class TopologicalNetwork(nn.Module):
         faces = self.face_in(face_features)
         for layer in self.layers:
             nodes, edges, faces = layer(nodes, edges, faces, b1, b2)
+        refined, _ = self.self_attention(nodes.unsqueeze(0), nodes.unsqueeze(0), nodes.unsqueeze(0), need_weights=False)
+        nodes = nodes + refined.squeeze(0)
         attention = torch.softmax(self.attention(nodes).squeeze(-1), dim=0)
         pooled = (attention[:, None] * nodes).sum(dim=0)
         return {"logits": self.classifier(pooled), "risk": torch.sigmoid(self.risk(pooled)).squeeze(-1),
@@ -58,13 +61,17 @@ def predict(checkpoint: Path, features, b1, b2) -> dict:
     import json
     import numpy as np
     metadata = json.loads(checkpoint.with_suffix(".json").read_text())
+    from .config import settings
+    device = settings().device
+    if device not in {"cpu", "cuda"} or (device == "cuda" and not torch.cuda.is_available()):
+        raise RuntimeError("Configured inference device unavailable")
     network = TopologicalNetwork(num_classes=len(metadata["classes"]))
     network.load_state_dict(torch.load(checkpoint, map_location="cpu", weights_only=True))
-    network.eval()
+    network.to(device).eval()
     with torch.inference_mode():
-        node = torch.as_tensor(np.asarray(features, dtype=np.float32))
-        incidence1 = torch.as_tensor(b1)
-        incidence2 = torch.as_tensor(b2)
+        node = torch.as_tensor(np.asarray(features, dtype=np.float32), device=device)
+        incidence1 = torch.as_tensor(b1, device=device)
+        incidence2 = torch.as_tensor(b2, device=device)
         edge = aggregate(incidence1.T, node)
         face = aggregate(incidence2.T, edge)
         output = network(node, edge, face, incidence1, incidence2)

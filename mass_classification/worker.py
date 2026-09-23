@@ -12,7 +12,7 @@ from psycopg.types.json import Jsonb
 
 from .analysis import extract_features, classify, normalize_name
 from .config import settings
-from .db import transaction, migrate, audit
+from .db import transaction, migrate, audit, tenant_embedding
 from .embedding import embed
 from .extract import extract, chunks, ExtractionError
 from .topology import graph_metrics, persistent_homology, incidence
@@ -39,6 +39,7 @@ def process(job):
                            (job["document_id"], job["tenant_id"])).fetchone()
         if not doc:
             raise ValueError("Missing document")
+        model_name = tenant_embedding(conn, job["tenant_id"])
         conn.execute("UPDATE documents SET status='processing' WHERE id=%s AND tenant_id=%s", (doc["id"], job["tenant_id"]))
     path = cfg.data_dir / job["tenant_id"] / doc["sha256"]
     if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != doc["sha256"]:
@@ -46,7 +47,7 @@ def process(job):
     text, metadata = extract(path, doc["filename"], cfg.asr_model)
     pieces = chunks(text)[:500]
     truncated = len(text) > 500 * 800
-    vectors = embed(pieces, cfg.embedding_model)
+    vectors = embed(pieces, model_name)
     mentions, relations, signals = extract_features(text, cfg.spacy_model)
     labels, explanation = classify(signals, text)
     # Restrict topology to extracted, evidenced relations; mere co-mentions are not edges.
@@ -69,7 +70,7 @@ def process(job):
         try:
             from .tnn import predict
             nodes, _, _, b1, b2 = incidence(graph_edges)
-            node_vectors = embed(nodes, cfg.embedding_model)
+            node_vectors = embed(nodes, model_name)
             prediction = predict(checkpoint, node_vectors, b1, b2)
             explanation["attention_note"] = "Attention shows model focus, not a causal explanation."
         except (ValueError, RuntimeError, FileNotFoundError, KeyError) as exc:
@@ -79,6 +80,8 @@ def process(job):
         prediction = {"status": "unavailable", "reason": "no_approved_trained_model_or_graph"}
     metadata["embedding_truncated"] = truncated
     with transaction() as conn:
+        if tenant_embedding(conn, job["tenant_id"], lock=True) != model_name:
+            raise RuntimeError("Tenant embedding model changed; retry processing")
         conn.execute("DELETE FROM analyses WHERE document_id=%s AND tenant_id=%s", (doc["id"], job["tenant_id"]))
         conn.execute("DELETE FROM chunks WHERE document_id=%s AND tenant_id=%s", (doc["id"], job["tenant_id"]))
         conn.execute("DELETE FROM mentions WHERE document_id=%s AND tenant_id=%s", (doc["id"], job["tenant_id"]))
@@ -88,9 +91,12 @@ def process(job):
                          (uuid.uuid4(), job["tenant_id"], doc["id"], i, piece, vector))
         entity_ids = {}
         for name, kind in names:
-            row = conn.execute("INSERT INTO entities(id,tenant_id,canonical,kind) VALUES (%s,%s,%s,%s) "
-                               "ON CONFLICT(tenant_id,kind,canonical) DO UPDATE SET canonical=EXCLUDED.canonical RETURNING id",
-                               (uuid.uuid4(), job["tenant_id"], name, kind)).fetchone()
+            row = conn.execute("SELECT entity_id AS id FROM entity_aliases WHERE tenant_id=%s AND kind=%s AND alias=%s",
+                               (job["tenant_id"], kind, name)).fetchone()
+            if row is None:
+                row = conn.execute("INSERT INTO entities(id,tenant_id,canonical,kind) VALUES (%s,%s,%s,%s) "
+                                   "ON CONFLICT(tenant_id,kind,canonical) DO UPDATE SET canonical=EXCLUDED.canonical RETURNING id",
+                                   (uuid.uuid4(), job["tenant_id"], name, kind)).fetchone()
             entity_ids[(name, kind)] = row["id"]
         for mention in mentions:
             entity_id = entity_ids.get((normalize_name(mention.text), mention.kind))

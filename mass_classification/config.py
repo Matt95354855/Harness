@@ -14,6 +14,7 @@ class Settings:
     asr_model: str
     max_upload_bytes: int
     allowed_origins: tuple[str, ...]
+    device: str
 
 
 def settings() -> Settings:
@@ -26,4 +27,5 @@ def settings() -> Settings:
         asr_model=os.environ.get("ASR_MODEL", "small"),
         max_upload_bytes=int(os.environ.get("MAX_UPLOAD_BYTES", "52428800")),
         allowed_origins=tuple(x.strip() for x in os.environ.get("ALLOWED_ORIGINS", "").split(",") if x.strip()),
+        device=os.environ.get("MASS_DEVICE", "cpu"),
     )

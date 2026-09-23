@@ -6,7 +6,15 @@ import numpy as np
 @lru_cache(maxsize=2)
 def model(name: str):
     from sentence_transformers import SentenceTransformer
-    return SentenceTransformer(name)
+    from .config import settings
+    device = settings().device
+    if device not in {"cpu", "cuda"}:
+        raise ValueError("MASS_DEVICE must be cpu or cuda")
+    if device == "cuda":
+        import torch
+        if not torch.cuda.is_available():
+            raise RuntimeError("MASS_DEVICE=cuda requested but CUDA is unavailable")
+    return SentenceTransformer(name, device=device)
 
 
 def embed(texts: list[str], name: str) -> np.ndarray:

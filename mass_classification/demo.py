@@ -129,7 +129,12 @@ def initialize():
         """)
         if not conn.execute("SELECT 1 FROM documents LIMIT 1").fetchone():
             for filename, title, content in SAMPLES:
-                create_document(conn, filename, content, {"title": title, "type": "synthetic_example"})
+                event_at = {"01-releve-synthetique.txt": "2026-04-14T00:00:00+00:00",
+                            "02-courriel-synthetique.txt": "2026-04-20T00:00:00+00:00"}.get(filename)
+                source = {"title": title, "type": "synthetic_example"}
+                if event_at:
+                    source["event_at"] = event_at
+                create_document(conn, filename, content, source)
 
 
 @asynccontextmanager
@@ -156,7 +161,7 @@ def home():
 
 @app.get("/static/{filename}")
 def asset(filename: str):
-    if filename not in {"app.js", "style.css", "manifest.json", "sw.js", "icon.svg"}:
+    if filename not in {"app.js", "style.css", "manifest.json", "sw.js", "icon.svg", "offline.html"}:
         raise HTTPException(404)
     return FileResponse(ROOT / "static" / filename)
 
@@ -180,6 +185,18 @@ def documents(limit: int = 50, offset: int = 0):
         rows = conn.execute("SELECT id,filename,byte_size,source,status,created_at FROM documents "
                             "ORDER BY created_at DESC LIMIT ? OFFSET ?", (limit, offset)).fetchall()
         return [dict(row) | {"source": json.loads(row["source"])} for row in rows]
+
+
+@app.get("/v1/timeline")
+def timeline(limit: int = 100):
+    from .temporal import timeline as build_timeline
+    if not 1 <= limit <= 250:
+        raise HTTPException(422, "Limite invalide")
+    with database() as conn:
+        rows = [dict(row) | {"source": json.loads(row["source"])} for row in
+                conn.execute("SELECT id,filename,status,source,created_at FROM documents "
+                             "ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()]
+    return build_timeline(rows)
 
 
 def get_document(conn, doc_id):

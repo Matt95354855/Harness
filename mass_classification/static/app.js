@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const state = {key: sessionStorage.getItem('massKey') || '', mode: 'production', role: 'reader', docs: [], selected: null, page: 'overview', connected: false};
-const titles = {overview: 'Vue d’ensemble', documents: 'Documents', search: 'Recherche', graph: 'Relations', audit: 'Journal d’audit'};
+const titles = {overview: 'Vue d’ensemble', documents: 'Documents', search: 'Recherche', graph: 'Relations', timeline: 'Chronologie', audit: 'Journal d’audit'};
 const labels = {banking: 'Finance', finance: 'Finance', investigation: 'Enquête', enquete: 'Enquête', media: 'Média'};
 const node = (tag, value = '', className = '') => {const item = document.createElement(tag); item.textContent = value; item.className = className; return item;};
 const fmtDate = value => {try {return new Date(value).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'});} catch {return '—';}};
@@ -44,6 +44,7 @@ function showPage(page) {
   document.querySelectorAll('[data-page]').forEach(item => {item.classList.toggle('active', item.dataset.page === page); item.setAttribute('aria-current', item.dataset.page === page ? 'page' : 'false');});
   $('sidebar').classList.remove('open'); $('menu-toggle').setAttribute('aria-expanded','false');
   if (page === 'graph') loadGraph();
+  if (page === 'timeline') loadTimeline();
   if (page === 'audit') loadAudit();
   if (page === 'documents') renderDocuments();
   window.scrollTo({top:0, behavior:'smooth'});
@@ -106,6 +107,11 @@ async function openDocument(id) {
       const prediction=analysis.predictions || {};
       if (prediction.status === 'unavailable') host.append(node('p','Aucun modèle prédictif approuvé n’est actif pour cette pièce. Les indications affichées proviennent de règles explicites.','explanation'));
       if (analysis.explanation?.limitations) host.append(node('p',analysis.explanation.limitations,'explanation'));
+      const contributions=analysis.explanation?.priority_contributions;
+      if (contributions) {host.append(node('h3','Pourquoi cette priorité ?'));const list=node('div','','explanation-bars');
+        Object.entries(contributions).forEach(([name,value])=>{const line=node('div','','explanation-line');line.append(node('span',name.replaceAll('_',' ')),node('strong',`+${value}`));list.append(line);});host.append(list);
+        if(state.mode==='production'){const more=node('button','Calculer les contributions SHAP →','table-open');more.type='button';more.onclick=async()=>{more.disabled=true;try{const explanation=await api(`/v1/documents/${id}/explanation`);const result=node('p',`SHAP (base ${explanation.baseline}) : ${Object.entries(explanation.contributions).map(([k,v])=>`${k} ${v>=0?'+':''}${v.toFixed(1)}`).join(' · ')}. ${explanation.limitations}`,'explanation');list.append(result);}catch(error){notice(error.message,'error');}finally{more.disabled=false;}};host.append(more);}
+      }
     }
     host.append(node('h3','Contenu extrait'));
     host.append(node('div',doc.content || 'La pièce est encore en cours de traitement.','excerpt'));
@@ -119,6 +125,12 @@ async function loadGraph() {
     const graph=await api('/v1/graph'); host.replaceChildren();
     if (!graph.edges.length) {host.append(empty('Aucune relation extraite. Ajoutez une pièce contenant un lien explicite pour en voir ici.')); return;}
     const names=Object.fromEntries(graph.nodes.map(n=>[n.id,n.canonical]));
+    const shown=graph.nodes.slice(0,20), visible=new Set(shown.map(n=>n.id));
+    if(shown.length>1){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 600 320');svg.setAttribute('role','img');svg.setAttribute('aria-label','Schéma des entités et relations, détails ci-dessous');svg.classList.add('graph-svg');
+      const points=Object.fromEntries(shown.map((n,i)=>[n.id,{x:300+220*Math.cos(2*Math.PI*i/shown.length),y:160+120*Math.sin(2*Math.PI*i/shown.length)}]));
+      const el=(tag,attrs)=>{const item=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>item.setAttribute(k,String(v)));svg.append(item);return item;};
+      graph.edges.filter(e=>visible.has(e.source_id)&&visible.has(e.target_id)).slice(0,40).forEach(e=>el('line',{x1:points[e.source_id].x,y1:points[e.source_id].y,x2:points[e.target_id].x,y2:points[e.target_id].y,stroke:'#a9bacb','stroke-width':2}));
+      shown.forEach(n=>{const p=points[n.id];el('circle',{cx:p.x,cy:p.y,r:7,fill:'#277e73'});const label=el('text',{x:p.x,y:p.y-13,'text-anchor':'middle',fill:'#213448','font-size':11});label.textContent=shortName(n.canonical).slice(0,22);});host.append(svg);}
     graph.edges.forEach(edge=>{
       const row=node('div','','relation-row'); const text=node('div','','relation-text');
       text.append(node('strong',`${names[edge.source_id] || 'Entité'} → ${edge.kind} → ${names[edge.target_id] || 'Entité'}`),node('small',`Source : ${edge.evidence}`));
@@ -126,6 +138,10 @@ async function loadGraph() {
     });
   } catch(error) {host.replaceChildren(empty(error.message));}
 }
+async function loadTimeline(){const host=$('timeline-list');host.replaceChildren(empty('Chargement des dates…'));
+  try{const events=await api('/v1/timeline');host.replaceChildren();if(!events.length){host.append(empty('Aucune pièce disponible.'));return;}
+    events.forEach(event=>{const row=node('div','','timeline-item');const dot=node('span','','timeline-dot');dot.setAttribute('aria-hidden','true');const body=node('div','','timeline-body');body.append(node('small',`${fmtDate(event.at)} · ${event.date_kind==='source_event'?'Date déclarée par la source':'Date d’importation'}`),node('strong',event.filename));const open=node('button','Voir la pièce →','table-open');open.type='button';open.onclick=()=>openDocument(event.document_id);row.append(dot,body,open);host.append(row);});
+  }catch(error){host.replaceChildren(empty(error.message));}}
 async function loadAudit() {
   const host=$('audit-list'); host.replaceChildren(empty('Chargement du journal…'));
   try {

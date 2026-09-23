@@ -57,3 +57,35 @@ metadata: {name: mass-api}
 spec:
   selector: {app: mass-api}
   ports: [{port: 80, targetPort: 8000}]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: {name: mass-api}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: mass-api}
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: {type: Utilization, averageUtilization: 70}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: mass-api}
+spec:
+  minAvailable: 1
+  selector: {matchLabels: {app: mass-api}}
+---
+# Default deny is scoped to this application's pods; allow only named peers.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: mass-api-ingress}
+spec:
+  podSelector: {matchLabels: {app: mass-api}}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector: {matchLabels: {mass-api-clients: "true"}}
+    ports: [{protocol: TCP, port: 8000}]

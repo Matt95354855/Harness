@@ -104,9 +104,9 @@ L’API HTTP sert également à une intégration autorisée avec un fournisseur 
 
 Le script `mass-train --dataset cases.npz --output /var/lib/mass/models/candidate.pt --classes banking media other` entraîne un modèle topologique sur des **graphes de cas annotés par des personnes**. Chaque objet `samples` du NPZ contient `nodes` (N × 384), `b1` (N × E), `b2` (E × F), `label` (indice de classe) et `risk` (cible entre 0 et 1). L’entraînement exige au moins 20 cas, sépare 80/20 et écrit une précision de validation. Un jeu de 20 cas ne suffit pas à autoriser l’usage opérationnel ; effectuer validation indépendante, calibration, dérive et revue juridique avant de renommer les sorties en `approved.pt` et `approved.json`. Charger uniquement des NPZ préparés par l’équipe d’exploitation : ce format peut contenir des objets Python.
 
-Les règles `rules:v1` sont une base explicable, pas un classificateur supervisé. La résolution de coréférence, l’extraction neuronale de relations, les embeddings de graphe entraînés, SHAP, la prévision d’action et les classes fraude/crédibilité **ne sont pas validées** en l’absence de corpus annoté et de vérité terrain. L’attention d’un réseau n’établit pas une cause. Conserver dans les rapports la version du modèle, les limitations et l’élément de preuve.
+Les règles `rules:v1` sont une base explicable, pas un classificateur supervisé. SHAP explique uniquement leur priorité, sur demande. La résolution de coréférence, l’extraction neuronale de relations, les embeddings de graphe entraînés, SHAP pour le TNN, la prévision d’action et les classes fraude/crédibilité **ne sont pas validées** en l’absence de corpus annoté et de vérité terrain. L’attention d’un réseau n’établit pas une cause. Conserver dans les rapports la version du modèle, les limitations et l’élément de preuve.
 
-Pour adapter les embeddings à un tenant, préparer un TSV `text_a<TAB>text_b<TAB>similarity` (en-tête inclus), puis exécuter `mass-tune-embeddings --pairs paires.tsv --base-model <modele-local> --output /var/lib/mass/models/tenant-v2`. L’évaluation utilise 20 % de paires retenues. Mettre ensuite `EMBEDDING_MODEL` sur le chemin validé et **réindexer tous les segments du tenant** avant toute recherche, faute de quoi la comparaison de vecteurs issus de deux modèles n’a aucun sens. Un outil de réindexation en ligne avec bascule atomique reste à fournir.
+Pour adapter les embeddings à un tenant, préparer un TSV `text_a<TAB>text_b<TAB>similarity` (en-tête inclus), puis exécuter `mass-tune-embeddings --pairs paires.tsv --base-model <modele-local> --output /var/lib/mass/models/tenant-v2`. L’évaluation utilise 20 % de paires retenues. Mettre ensuite `EMBEDDING_MODEL` sur le chemin validé et **réindexer tous les segments du tenant** avant toute recherche, faute de quoi la comparaison de vecteurs issus de deux modèles n’a aucun sens. La commande `mass-reindex` ci-dessous réalise une bascule transactionnelle pendant une fenêtre de maintenance.
 
 ## Exploitation et sécurité
 
@@ -136,15 +136,86 @@ Les tests unitaires vérifient extraction sûre, complexité bornée, incidence 
 | Formats texte, image, audio, vidéo | extraction et garde-fous, OCR/ASR locaux | formats rares, flux vidéo continu, validation de qualité OCR et reconnaissance faciale selon cadre légal |
 | Connecteurs et flux | CLI fichiers/RSS/S3/SQL/Mongo/SFTP/Kafka ; API | points de reprise pour polling, intégrations propriétaires et permissions |
 | NLP, relations, signaux | spaCy, règles, langue, sentiment anglais, anomalies temporelles utilitaires | corpus métier et extraction neuronale, coréférence, géolocalisation fiable |
-| Embeddings et graphe | phrase multilingue, indexation, mentions, relations, topologie | fine tuning par tenant, désambiguïsation supervisée, graphe distribué |
+| Embeddings et graphe | phrase multilingue, adaptation et réindexation par tenant, mentions, relations, topologie | validation de l’adaptation, désambiguïsation supervisée, graphe distribué |
 | TNN et prédictions | architecture et entraînement hors ligne ; absence de poids signalée | corpus labellisé suffisant, calibration, validation indépendante, promotion du modèle |
-| Interprétabilité | règles, passages et provenance, scores détaillés, attention disponible si modèle | SHAP sur modèle validé, comparables historiques autorisés, contrôle de dérive |
+| Interprétabilité | règles, passages et provenance, SHAP sur priorité par règles, attention si modèle | SHAP sur modèle validé, comparables historiques autorisés, contrôle de dérive |
 | API, interface, export, audit | service et console responsive, CSV/PDF, revue et journal | journal inviolable, politique de rétention, fédération SSO, reportings approfondis |
 | Résilience et échelle | tâches SQL avec bail, retry, Docker, référence Kubernetes | bascule/backup gérés, partitions/ANN, supervision SLA, essais de charge |
-| Mobile et hors ligne | interface responsive et coque PWA | analyse de pièces hors ligne et application mobile native |
+| Mobile et hors ligne | interface responsive et exemple fictif PWA hors ligne | analyse de pièces hors ligne et application mobile native |
 
 Les estimations de coût, latence, capacité et qualité du guide sont des **hypothèses**, non des résultats mesurés pour ce dépôt.
 
 ## Licence et contribution
 
 Voir [LICENSE](../LICENSE). Proposer des tests sur données synthétiques ; ne jamais committer de données bancaires, dossiers d’enquête, clés, checkpoints non autorisés ni fichiers `.env`.
+
+## Extensions SHOULD HAVE et NICE TO HAVE
+
+Cette section décrit le **comportement réel** de la branche. « Disponible » signifie que l’interface ou l’API existe ; cela ne vaut pas validation métier sur des données sensibles.
+
+| Point du guide | État vérifiable | Limite pratique |
+| --- | --- | --- |
+| Homologie persistante | `topology.persistent_homology` via GUDHI sur les arêtes extraites | Graphes bornés, relations par règles ; résultat descriptif |
+| Attention avancée | Attention multi-tête sur nœuds après propagation simpliciale, puis agrégation pondérée ; `tnn.py` | Nécessite **de nouveaux** poids entraînés et validés ; les anciens checkpoints ne sont pas compatibles |
+| SHAP | `GET /v1/documents/{id}/explanation`, calcul exact du score `rules:v1` avec une référence nulle | SHAP est optionnel en installation Python (`.[explain]`) et inclus dans l’image ; explique une règle, pas un modèle TNN ni une cause |
+| Tableau de bord et Q&A | Interface responsive, recherche sourcée et `POST /v1/ask` | Réponse extractive, sans génération libre |
+| Traitement rapide | Worker avec bail SQL et reprise ; l’interface vérifie l’état environ toutes les 5 secondes après import | Pas de flux continu garanti ni de SLA temps réel |
+| Images, audio et vidéo | OCR, transcription et images vidéo échantillonnées avec composants locaux | Qualité et ressources dépendantes des modèles/médias |
+| Déduplication d’entités | Suggestions `GET /v1/entities/candidates` ; fusion administrateur `POST /v1/entities/merge` avec conservation de l’alias | Comparaison des 250 premières entités du tenant, suggestions de nom uniquement ; aucune fusion automatique |
+| Modélisation temporelle | `GET /v1/timeline` et onglet Chronologie : `source.event_at` ISO 8601 horodaté si fourni, sinon date d’import explicitement marquée | Pas d’inférence fiable de date à partir du texte ; statistiques temporelles avancées restent utilitaires |
+| GPU | `MASS_DEVICE=cuda` pour embeddings et inférence TNN ; échec explicite si CUDA absent | Image GPU PyTorch, pilote et GPU doivent être fournis par l’opérateur ; aucune mesure de gain annoncée |
+| Kubernetes | Déploiements, service, sondes, HPA API, PDB, politique d’entrée et exemple de patch GPU | Manifeste de référence ; services gérés, secrets, stockage RWX, TLS, métriques et politique réseau du cluster à préparer |
+| Visualisation avancée | Carte SVG accessible des 20 premiers nœuds, liste de preuves et chronologie | Vue bornée, non représentative d’un graphe complet ; aucune analyse visuelle causale |
+| Adaptation client | `mass-tune-embeddings` et `mass-reindex --tenant ...` ; modèle et index propres au tenant | Paires annotées, validation indépendante, interruption de maintenance lors de la réindexation |
+| Mobile | Interface responsive avec manifeste PWA installable selon navigateur | Pas d’application iOS/Android native ni de synchronisation de dossiers |
+| Hors ligne | Service worker met en cache uniquement `offline.html` fictif, CSS et icône | Les pièces et API ne sont jamais mises en cache ; aucune analyse hors ligne |
+| Multitenant | Clés et requêtes filtrées par tenant, modèles d’embeddings activables séparément | Isolation applicative ; comptes DB, volumes et contrôles externes restent de la responsabilité de l’exploitant |
+| Audit renforcé | Chaîne SHA-256 par tenant pour **nouveaux** événements, séquencée sous verrou ; `GET /v1/audit/verify` | Les événements antérieurs à la migration sont signalés `legacy_unsealed` ; un administrateur DB peut réécrire la chaîne entière sans ancrage externe |
+
+### Utiliser les nouvelles fonctions
+
+```bash
+# Fournir une date d’événement de la source, si elle est connue et documentée.
+curl -H "Authorization: Bearer $MASS_API_KEY" -F file=@exemple.txt \
+  -F 'source_json={"case":"D-17","event_at":"2026-04-14T10:30:00+02:00"}' \
+  http://127.0.0.1:8000/v1/documents
+curl -H "Authorization: Bearer $MASS_API_KEY" http://127.0.0.1:8000/v1/timeline
+curl -H "Authorization: Bearer $MASS_API_KEY" http://127.0.0.1:8000/v1/entities/candidates
+curl -H "Authorization: Bearer $MASS_API_KEY" http://127.0.0.1:8000/v1/audit/verify
+```
+
+Pour calculer SHAP, consulter une pièce analysée puis appeler `GET /v1/documents/{id}/explanation`. Les trois contributions (`money_mentions`, `domains`, `urgency_mentions`) s’additionnent à la priorité affichée après plafonnement à 100 ; le niveau de référence est zéro. Un modèle neural entraîné a besoin d’une méthode d’explication et d’une évaluation distinctes.
+
+La fusion d’entités demande le rôle `admin` :
+
+```bash
+curl -X POST -H "Authorization: Bearer $MASS_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"source_id":"UUID_ENTITE_A_REMPLACER","target_id":"UUID_ENTITE_CONSERVEE"}' \
+  http://127.0.0.1:8000/v1/entities/merge
+```
+
+Comparer les mentions et passages avant l’appel. La fusion déplace mentions, relations et alias vers l’entité conservée, puis journalise les identifiants ; elle n’est pas une simple suggestion annulable automatiquement. Les noms et types doivent appartenir au même tenant et au même type.
+
+### Modèle d’embeddings propre à un tenant
+
+1. Préparer au moins 100 paires de phrases relues, séparées par tabulations (`text_a`, `text_b`, `similarity`). Conserver des exemples d’évaluation indépendants supplémentaires.
+2. Entraîner hors ligne : `mass-tune-embeddings --pairs paires.tsv --base-model /chemin/modele-base --output /var/lib/mass/models/tenants/atlas/embedding`.
+3. Valider le modèle, les erreurs, la dimension 384 et son droit d’utilisation. Placer le dossier sur le volume `MODEL_DIR` visible par l’API et le worker.
+4. Pendant une fenêtre de maintenance **du tenant** et après sauvegarde : `mass-reindex --tenant atlas`. Cette commande verrouille le tenant, vérifie le modèle, recalcule tous ses segments et active ce modèle dans la même transaction. Une erreur annule l’ensemble ; sur un gros volume, prévoir une migration par double index et bascule contrôlée plutôt que cette transaction longue.
+5. Redémarrer les services si le modèle était déjà chargé en cache, puis contrôler recherche, latence et rappel. Les autres tenants conservent leur modèle ; le modèle de base reste défini par `EMBEDDING_MODEL`.
+
+### Exploitation Kubernetes et audit
+
+Remplacer le registre et le tag d’image de `deploy/k8s/mass.yaml` par un digest immuable. Fournir `mass-config` (`DATABASE_URL`, `REDIS_URL`, `DATA_DIR`, `MODEL_DIR`, etc.), les volumes `mass-data-rwx` et `mass-models`, PostgreSQL/pgvector, Redis et la collecte des métriques CPU avant de déployer. La politique d’entrée autorise seulement les namespaces marqués `mass-api-clients: "true"` : y placer la passerelle interne. TLS, sorties réseau et permissions DB restent à configurer dans le cluster. Le patch `deploy/k8s/gpu-worker.patch.yaml` est **un exemple**, utilisable seulement avec un image CUDA et un device plugin compatibles ; le manifeste standard fonctionne sur CPU.
+
+`/v1/audit/verify` recalcule la chaîne et retourne `valid`, `checked`, `legacy_unsealed` et `head_hash`. Exporter périodiquement le `head_hash` vers un support externe à la base pour détecter une réécriture par un administrateur DB. Les événements existant avant la migration 002 restent lisibles mais ne sont pas rétroactivement certifiés. Vérifier la restauration de la base **avec** sa chaîne et comparer l’ancre externe.
+
+### Installation hors Docker et tests
+
+```bash
+python -m pip install -e '.[topology,explain,test]'
+python -m pytest -q
+```
+
+Les tests locaux portent sur la provenance des dates, les suggestions limitées par type, les variations d’empreintes, le parcours découverte et les règles. Les opérations transactionnelles PostgreSQL, CUDA, OCR/ASR réel et la charge doivent encore être testées sur une infrastructure représentative. Le mode découverte expose la chronologie et la carte, mais pas la fusion ni SHAP : il sert uniquement aux exemples fictifs.

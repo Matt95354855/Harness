@@ -13,6 +13,8 @@ def test_discovery_workflow(tmp_path, monkeypatch):
         assert session.json()["mode"] == "demo"
         documents = client.get("/v1/documents").json()
         assert len(documents) == 3
+        timeline = client.get("/v1/timeline").json()
+        assert len(timeline) == 3 and {item["date_kind"] for item in timeline} == {"source_event", "import"}
         assert all(doc["source"]["type"] == "synthetic_example" for doc in documents)
 
         search = client.post("/v1/search", json={"query": "virement Nova"})
@@ -25,6 +27,7 @@ def test_discovery_workflow(tmp_path, monkeypatch):
                                data={"source_json": '{"description":"Essai local"}'})
         assert imported.status_code == 202
         doc_id = imported.json()["id"]
+        assert client.get("/static/offline.html").status_code == 200
         assert client.get(f"/v1/documents/{doc_id}").json()["analysis"]["labels"]["review_priority"] > 0
         duplicate = client.post("/v1/documents", files={"file": ("note.txt", b"Note fictive : facture de 20 EUR")})
         assert duplicate.json()["duplicate"]
