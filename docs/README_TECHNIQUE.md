@@ -78,9 +78,13 @@ flowchart TD
 | `GET /v1/documents`, `GET /v1/documents/{id}` | tous | lister, lire une pièce et ses analyses |
 | `POST /v1/search`, `POST /v1/ask` | tous | chercher des passages et obtenir des citations |
 | `GET /v1/graph` | tous | voir les relations attestées par passage |
+| `GET /v1/timeline`, `GET /v1/documents/{id}/explanation` | tous | dates avec leur provenance, attribution SHAP des règles |
+| `GET /v1/entities/candidates` | admin, analyst | suggestions de noms similaires |
+| `POST /v1/entities/merge` | admin | fusion revue et auditée |
 | `POST /v1/documents/{id}/feedback` | admin, analyst | enregistrer une revue |
 | `GET /v1/exports/documents.csv`, `GET /v1/documents/{id}/report.pdf` | admin, analyst | exporter |
 | `GET /v1/audit`, `GET /metrics` | admin | journal et métriques |
+| `GET /v1/audit/verify` | admin | vérifier la chaîne des nouveaux événements |
 | `GET /v1/monitoring` | admin | statuts, backlog, versions, retours humains |
 | `GET /health/live`, `GET /health/ready` | public interne | sondes |
 
