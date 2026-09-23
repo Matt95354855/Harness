@@ -4,7 +4,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr f
 WORKDIR /app
 COPY pyproject.toml ./
 COPY mass_classification ./mass_classification
-COPY migrations ./migrations
 RUN pip install --no-cache-dir ".[topology]" && python -m spacy download xx_ent_wiki_sm
 RUN useradd -u 10001 -m mass && mkdir -p /var/lib/mass && chown -R mass:mass /var/lib/mass
 USER mass

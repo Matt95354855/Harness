@@ -33,7 +33,7 @@ def transaction():
 
 def migrate() -> None:
     # Migration 001 is idempotent. An advisory lock serializes startup across replicas.
-    sql = (Path(__file__).resolve().parent.parent / "migrations" / "001_initial.sql").read_text()
+    sql = (Path(__file__).resolve().parent / "migrations" / "001_initial.sql").read_text()
     with pool().connection() as conn:
         with conn.transaction():
             conn.execute("SELECT pg_advisory_xact_lock(17290319)")

@@ -31,7 +31,11 @@ mass-connector = "mass_classification.connectors:main"
 mass-tune-embeddings = "mass_classification.tune_embeddings:main"
 
 [tool.setuptools.package-data]
-mass_classification = ["static/*"]
+mass_classification = ["static/*", "migrations/*.sql"]
+
+[tool.setuptools.packages.find]
+include = ["mass_classification*"]
+namespaces = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
