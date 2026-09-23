@@ -4,6 +4,21 @@ Plateforme Python d’ingestion, de classification et d’exploration de pièces
 
 Le [guide fourni](GUIDE_CONSTRUCTION_PLATEFORME_COMPLETE.md) décrit des techniques confirmées, proposées et hypothétiques. Ce dépôt en transforme une partie en code exploitable et **identifie explicitement les composants dépendant de données, de validation ou d’infrastructure**. Il n’annonce pas une performance de 10 millions de documents sans essai de charge.
 
+## Essayer l’interface en local
+
+Le mode découverte ouvre une vraie interface et fournit trois documents **entièrement fictifs**. Il fonctionne avec une base SQLite locale, sans Docker, clé API, PostgreSQL ni téléchargement de modèle :
+
+```bash
+python -m pip install -r requirements-demo.txt
+python -m mass_classification.demo
+```
+
+Ouvrir ensuite **http://127.0.0.1:8000/** dans le navigateur. Aucun compte n’est demandé dans ce mode ; le serveur n’écoute que sur `127.0.0.1`. Pour changer de port : `python -m mass_classification.demo --port 8080`.
+
+Depuis l’écran d’accueil, ouvrir une pièce d’exemple, rechercher `virement Nova`, suivre un lien dans **Relations**, puis enregistrer une revue. On peut aussi importer un fichier UTF-8 `.txt`, `.md`, `.csv`, `.tsv`, `.json` ou `.eml` de 5 Mio maximum et télécharger CSV/PDF. Les imports et revues restent dans `.mass-demo/demo.sqlite3` sur cette machine. Pour repartir des exemples initiaux, arrêter le serveur puis supprimer le dossier `.mass-demo` ; cela efface aussi les imports et revues locaux.
+
+**Portée du mode découverte :** l’import est traité immédiatement, la recherche est lexicale et les thèmes sont suggérés par des règles simples. Il ne lance ni les modèles d’embeddings, ni l’OCR, ni la transcription, ni le réseau neuronal de la plateforme complète. La bannière ambre de l’interface rappelle cette différence. Pour tester le pipeline complet avec vos propres pièces, suivre le démarrage Docker ci-dessous.
+
 ## Démarrage
 
 Pré-requis : Docker avec Compose, une machine disposant d’espace disque pour les modèles, Tesseract et FFmpeg fournis par l’image. Déploiement derrière un proxy TLS configuré par l’opérateur.

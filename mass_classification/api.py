@@ -105,6 +105,12 @@ def ready():
     return {"status": "ready"}
 
 
+@app.get("/v1/session")
+def session(user: Principal = Depends(principal)):
+    """Let the console verify a key and display the active workspace."""
+    return {"mode": "production", "tenant": user.tenant, "role": user.role}
+
+
 @app.get("/metrics")
 def metrics(user: Principal = Depends(require("admin"))):
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
@@ -117,7 +123,7 @@ def home():
 
 @app.get("/static/{filename}")
 def asset(filename: str):
-    if filename not in {"app.js", "style.css", "manifest.json", "sw.js"}:
+    if filename not in {"app.js", "style.css", "manifest.json", "sw.js", "icon.svg"}:
         raise HTTPException(404)
     return FileResponse(Path(__file__).parent / "static" / filename)
 
