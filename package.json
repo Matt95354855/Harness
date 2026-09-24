@@ -1,0 +1,34 @@
+{
+  "name": "@matt95354855/agent-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A local-first TypeScript agent harness with bounded execution, tools, memory and reproducible offline tests.",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "exports": { ".": { "types": "./dist/src/index.d.ts", "import": "./dist/src/index.js" } },
+  "bin": { "harness": "dist/src/cli.js" },
+  "files": ["dist/src", "README.md", ".env.example"],
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/src/cli.js",
+    "demo": "tsx src/cli.ts demo",
+    "doctor": "tsx src/cli.ts doctor",
+    "test": "tsx --test tests/unit/*.test.ts tests/integration/*.test.ts",
+    "test:coverage": "c8 --include='src/**/*.ts' --reporter=text --reporter=lcov tsx --test tests/unit/*.test.ts tests/integration/*.test.ts",
+    "lint": "eslint .",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "example:basic": "tsx examples/basic-search.ts",
+    "example:advanced": "tsx examples/advanced-agent.ts",
+    "example:multi-hop": "tsx examples/multi-hop-reasoning.ts",
+    "benchmark": "tsx scripts/benchmark.ts"
+  },
+  "dependencies": { "zod": "^4.1.13" },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1", "@types/node": "^22.19.0", "c8": "^10.1.3",
+    "eslint": "^9.39.1", "tsx": "^4.20.6", "typescript": "^5.9.3", "typescript-eslint": "^8.48.0"
+  }
+}

@@ -1,0 +1,17 @@
+export { Agent, type AgentDependencies } from './core/agent.js';
+export { loadConfig, validateConfig, agentConfigSchema, type HarnessConfig } from './core/config.js';
+export type * from './core/types.js';
+export { LLMClient } from './models/llm-client.js';
+export { MockLLMClient, ScriptedLLMClient } from './models/mock-client.js';
+export { PrismAdapter } from './models/prism-adapter.js';
+export { HermesReasoningEngine } from './hermes/reasoning-engine.js';
+export { shouldReflect } from './hermes/reflection.js';
+export { ToolRegistry } from './tools/tool-registry.js';
+export { ToolExecutor } from './tools/tool-executor.js';
+export type { ToolExecutorOptions, ExecutionContext } from './tools/tool-executor.js';
+export { SearchTool, HttpSearchProvider, FixtureSearchProvider, type HttpSearchOptions } from './tools/search-tool.js';
+export { PidevTool } from './tools/pidev-tool.js';
+export { ConversationMemory } from './memory/conversation.js';
+export { DecisionLog, writeTrace } from './memory/decision-log.js';
+export { Logger } from './utils/logger.js';
+export { createDemoAgent } from './demo.js';
