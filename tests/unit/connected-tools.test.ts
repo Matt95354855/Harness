@@ -9,6 +9,7 @@ import { ToolExecutor } from '../../src/tools/tool-executor.js';
 import { ToolRegistry } from '../../src/tools/tool-registry.js';
 import { WebFetchTool } from '../../src/tools/web-fetch.js';
 import { McpConnections } from '../../src/tools/mcp-client.js';
+import { createConfiguredToolRuntime } from '../../src/tools/configured-runtime.js';
 
 function executor(tools: ReturnType<LocalFileTools['tools']> | ReturnType<GoogleDriveTools['tools']> | WebFetchTool[]): ToolExecutor {
   const registry = new ToolRegistry(); for (const tool of tools) registry.register(tool); return new ToolExecutor(registry);
@@ -54,4 +55,14 @@ test('MCP client discovers and invokes tools from a stdio server', async t => {
   const tools = await connections.connectFile(config); const run = executor(tools);
   assert.deepEqual(tools.map(tool => tool.name), ['mcp_fixture_echo']);
   assert.deepEqual((await run.execute('mcp_fixture_echo', { text: 'bonjour' })).result?.data, { echoed: 'bonjour' });
+});
+
+test('an explicit allowlist does not initialize unrelated configured connections', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'harness-disabled-mcp-')); const config = join(root, 'mcp.json');
+  t.after(async () => { const { rm } = await import('node:fs/promises'); await rm(root, { recursive: true }); });
+  await writeFile(config, JSON.stringify({ servers: { github: { url: 'https://example.invalid/mcp', headers: { Authorization: 'Bearer $MISSING_TOKEN' } } } }));
+  const runtime = await createConfiguredToolRuntime({ LLM_PROVIDER: 'mock', LLM_MODEL: 'mock', SEARCH_PROVIDER: 'none', PERSIST_TRACES: 'false', WEB_ACCESS: 'true', ALLOWED_TOOLS: 'web_fetch', MCP_CONFIG_PATH: config });
+  t.after(() => runtime.close());
+  assert.deepEqual(runtime.capabilities, ['web']);
+  assert.deepEqual(runtime.registry.listAll().map(tool => tool.name), ['calculate', 'web_fetch']);
 });
