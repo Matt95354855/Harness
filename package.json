@@ -17,6 +17,7 @@
     "start": "node dist/src/cli.js",
     "demo": "tsx src/cli.ts demo",
     "doctor": "tsx src/cli.ts doctor",
+    "local:llm": "bash scripts/start-local-llm.sh",
     "test": "tsx --test tests/unit/*.test.ts tests/integration/*.test.ts",
     "test:coverage": "c8 --include='src/**/*.ts' --reporter=text --reporter=lcov tsx --test tests/unit/*.test.ts tests/integration/*.test.ts",
     "lint": "eslint .",

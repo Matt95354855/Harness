@@ -1,6 +1,6 @@
 # Harness
 
-**Un moteur d'exécution TypeScript pour construire, observer et tester des agents IA, prêt à être relié à un modèle local.**
+**Un moteur d'exécution TypeScript pour construire, observer et tester des agents IA, avec une configuration locale prête pour Qwen3.5 et `llama.cpp`.**
 
 [![CI](https://github.com/Matt95354855/Harness/actions/workflows/ci.yml/badge.svg)](https://github.com/Matt95354855/Harness/actions/workflows/ci.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A5%2022.13-417E38)
@@ -41,6 +41,21 @@ npm run check
 ```
 
 Le mode `mock` suit des scénarios déterministes. Il permet de vérifier l'orchestration ; il ne mesure pas l'intelligence d'un modèle et ne répond pas librement à toutes les questions.
+
+### Modèle local recommandé sur Mac Intel sans GPU
+
+La configuration testée utilise **Qwen3.5 0.8B Q8_0** avec `llama.cpp`. Le modèle occupe environ 795 Mo sur disque et fonctionne entièrement sur CPU.
+
+```bash
+# Terminal 1 : démarrer le serveur local après l'installation décrite dans le guide
+npm run local:llm
+
+# Terminal 2 : vérifier puis utiliser le harness
+npm run doctor
+npm run dev -- run "Calcule (12 + 8) * 3 avec l'outil calculate."
+```
+
+Le [guide du modèle local](docs/local-model.md) donne l'installation exacte, la configuration et les commandes de validation.
 
 ## Ce que le projet fournit
 
@@ -87,7 +102,7 @@ npm run doctor
 
 Les réglages et leurs valeurs par défaut figurent dans [`.env.example`](.env.example). Le fichier `.env` est ignoré par Git. Les variables déjà présentes dans l'environnement ont priorité.
 
-Pour relier ultérieurement un serveur local compatible :
+Pour relier un serveur local compatible :
 
 ```dotenv
 LLM_PROVIDER=openai-compatible

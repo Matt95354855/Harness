@@ -1,6 +1,50 @@
-# Brancher un modèle local
+# Utiliser le modèle local
 
-Le harness se teste dès maintenant sans modèle installé. Ce guide prépare l'étape suivante : connecter un modèle que vous aurez choisi et téléchargé séparément. Aucune commande normale de Harness ne télécharge automatiquement de poids de modèle.
+La configuration de référence utilise **Qwen3.5 0.8B Q8_0** avec `llama.cpp`. Elle a été validée sur un Mac Intel Core i7 avec 16 Go de mémoire, sans GPU : le modèle appelle réellement le calculateur du harness et obtient `60` pour `(12 + 8) * 3`.
+
+Le fichier du modèle reste dans `models/`, qui est ignoré par Git. Il n'est donc jamais envoyé sur GitHub.
+
+## Installation de référence sur macOS
+
+Depuis la racine du dépôt :
+
+```bash
+brew install llama.cpp
+mkdir -p models
+curl --fail --location --continue-at - \
+  --output models/Qwen3.5-0.8B-Q8_0.gguf \
+  "https://huggingface.co/ggml-org/Qwen3.5-0.8B-GGUF/resolve/main/Qwen3.5-0.8B-Q8_0.gguf?download=true"
+cp .env.example .env
+```
+
+Configurer ensuite `.env` avec :
+
+```dotenv
+LLM_PROVIDER=openai-compatible
+LLM_MODEL=qwen3.5-0.8b-local
+LLM_ENDPOINT=http://127.0.0.1:8080/v1
+LLM_API_KEY=
+SEARCH_PROVIDER=none
+TEMPERATURE=0
+HERMES_REFLECTION=false
+HERMES_MULTI_HOP=false
+ALLOWED_TOOLS=calculate
+```
+
+Le script fourni fixe le contexte à 4 096 jetons, utilise huit threads CPU, désactive le raisonnement caché et ne tente aucune accélération GPU :
+
+```bash
+npm run local:llm
+```
+
+Garder ce premier terminal ouvert. Dans un second terminal, lancer :
+
+```bash
+npm run doctor
+npm run dev -- run "Calcule (12 + 8) * 3 avec l'outil calculate."
+```
+
+Pour arrêter le serveur, revenir dans son terminal et utiliser `Ctrl+C`.
 
 ## 1. Vérifier le harness seul
 
