@@ -46,6 +46,10 @@ Le mode `mock` suit des scénarios déterministes. Il permet de vérifier l'orch
 
 La configuration testée utilise **Qwen3.5 0.8B Q8_0** avec `llama.cpp`. Le modèle occupe environ 795 Mo sur disque et fonctionne entièrement sur CPU.
 
+Sur la machine de validation (Mac Intel Core i7, 16 Go de mémoire, sans GPU), le modèle a sélectionné l'outil `calculate`, transmis l'expression `(12 + 8) * 3`, puis exploité le résultat `60` dans sa réponse. Ce test valide la chaîne complète : décision structurée, exécution contrôlée de l'outil et synthèse finale.
+
+![Trace locale de Qwen3.5 appelant l'outil calculate](docs/assets/qwen-local-calculator-trace.png)
+
 ```bash
 # Terminal 1 : démarrer le serveur local après l'installation décrite dans le guide
 npm run local:llm
@@ -112,7 +116,7 @@ LLM_API_KEY=
 SEARCH_PROVIDER=none
 ```
 
-Le modèle doit savoir produire les décisions JSON attendues par le harness. Un endpoint compatible ne garantit pas que chaque modèle suivra ce protocole correctement. Le [guide du modèle local](docs/local-model.md) décrit le raccordement à Ollama ou LM Studio et la procédure de validation.
+Le modèle doit savoir produire les décisions JSON attendues par le harness. Un endpoint compatible ne garantit pas que chaque modèle suivra ce protocole correctement. Le [guide du modèle local](docs/local-model.md) décrit l'installation testée avec `llama.cpp`, ainsi que les alternatives Ollama et LM Studio.
 
 Le modèle et la recherche sont configurés séparément. Utiliser un LLM local ne rend pas automatiquement la recherche privée ou hors ligne.
 
