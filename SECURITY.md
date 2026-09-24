@@ -4,7 +4,7 @@
 
 Harness est un processus Node.js local. Les outils enregistrés exécutent du code JavaScript avec les droits de ce processus. Le projet fournit une validation des paramètres, une liste d'outils autorisés et des limites d'exécution ; il ne fournit pas d'isolation système ni de frontière de sécurité entre code de confiance et code hostile.
 
-Le registre contient un calculateur arithmétique qui analyse une grammaire limitée sans `eval`. La recherche n'est enregistrée que lorsqu'un fournisseur est fourni. Aucun outil de shell ou d'accès général au système de fichiers n'est activé par défaut.
+Le registre contient un calculateur arithmétique qui analyse une grammaire limitée sans `eval`. La recherche n'est enregistrée que lorsqu'un fournisseur est fourni. Aucun outil de shell, d'accès au système de fichiers, à Google Drive, au Web ou à MCP n'est activé par défaut. Les outils de fichiers restent en lecture seule dans des racines canoniques déclarées. Le lecteur Web bloque les destinations locales et privées connues, mais un contrôle réseau externe reste recommandé dans un environnement hostile.
 
 Un délai maximal arrête l'attente du harness et transmet un signal d'annulation. Il ne peut pas tuer une fonction synchrone qui bloque Node.js, ni garantir l'arrêt d'un outil personnalisé qui ignore ce signal. Exécuter du code non fiable exige une isolation supplémentaire hors de cette bibliothèque.
 

@@ -1,6 +1,8 @@
 # Harness
 
-**Un moteur d'exécution TypeScript pour construire, observer et tester des agents IA, avec une configuration locale prête pour Qwen3.5 et `llama.cpp`.**
+**Un moteur d'exécution TypeScript pour construire, connecter, observer et tester des agents IA, avec une configuration locale prête pour Qwen3.5 et `llama.cpp`.**
+
+Le harness peut relier un LLM local à des serveurs MCP, GitHub, des dossiers locaux autorisés, Google Drive et des pages Web publiques. Ces capacités sont désactivées par défaut et s'activent explicitement.
 
 [![CI](https://github.com/Matt95354855/Harness/actions/workflows/ci.yml/badge.svg)](https://github.com/Matt95354855/Harness/actions/workflows/ci.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A5%2022.13-417E38)
@@ -67,6 +69,9 @@ Le [guide du modèle local](docs/local-model.md) donne l'installation exacte, la
 | --- | --- |
 | Boucle d'agent | Actions `SEARCH`, `TOOL`, `REFLECT` et `RESPOND`, avec validation des décisions. |
 | Client de modèle | Fournisseur simulé et client HTTP compatible avec `/v1/chat/completions`. |
+| Connexions MCP | Serveurs distants en Streamable HTTP et serveurs locaux en `stdio`, avec découverte automatique des outils. |
+| Applications | GitHub en MCP, fichiers locaux en lecture seule et Google Drive avec OAuth. |
+| Internet | Recherche configurable et lecture bornée de pages Web publiques. |
 | Outils extensibles | Registre typé, validation des paramètres, liste d'autorisation et délai maximal. |
 | Recherche | Fixtures hors ligne, endpoint JSON configurable et adaptateur SearXNG. |
 | Mémoire | Conversations, faits avec expiration, décisions et statistiques d'utilisation. |
@@ -105,6 +110,18 @@ npm run doctor
 ```
 
 Les réglages et leurs valeurs par défaut figurent dans [`.env.example`](.env.example). Le fichier `.env` est ignoré par Git. Les variables déjà présentes dans l'environnement ont priorité.
+
+Pour activer les connexions demandées :
+
+```dotenv
+WEB_ACCESS=true
+LOCAL_FILE_ROOTS=/Users/vous/Documents,/Users/vous/Projects
+GOOGLE_DRIVE_ACCESS_TOKEN=votre_jeton_oauth_drive_readonly
+GITHUB_TOKEN=github_pat_votre_jeton
+MCP_CONFIG_PATH=.harness/mcp.json
+```
+
+Copier ensuite [`config/mcp.example.json`](config/mcp.example.json) vers `.harness/mcp.json`. L'exemple utilise le serveur MCP officiel GitHub en lecture seule. `npm run doctor` affiche les connexions actives et les outils réellement disponibles. Le [guide des connexions](docs/connections.md) explique les autorisations, limites et étapes de configuration.
 
 Pour relier un serveur local compatible :
 

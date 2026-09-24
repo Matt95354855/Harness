@@ -10,7 +10,7 @@ const run = (args: string[], env: NodeJS.ProcessEnv = {}) => exec(process.execPa
 });
 test('CLI help and version are available without valid provider configuration', async () => {
   assert.match((await run(['--help'], { LLM_PROVIDER: 'invalid' })).stdout, /Harness/);
-  assert.equal((await run(['--version'])).stdout.trim(), '0.1.0');
+  assert.equal((await run(['--version'])).stdout.trim(), '0.2.0');
 });
 test('CLI emits parseable JSON and deterministic demo ignores provider configuration', async () => {
   const { stdout } = await run(['demo', '--json'], { LLM_PROVIDER: 'invalid' });

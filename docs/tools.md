@@ -7,6 +7,10 @@ Les outils de ce dépôt couvrent les capacités du cahier des charges : recherc
 | `calculate` | Tout registre standard | `expression` : chaîne arithmétique | `{ "result": nombre }` |
 | `web_search` | Un fournisseur est passé au registre | `query`, puis options de recherche | Résultats normalisés, sources, durée et indicateur de cache |
 | `word_count` | Exemple avancé uniquement | `text` : chaîne | `{ "words": nombre }` |
+| `web_fetch` | `WEB_ACCESS=true` | `url` publique | Texte borné de la page |
+| `local_list`, `local_read`, `local_search` | `LOCAL_FILE_ROOTS` défini | Chemins autorisés | Liste, contenu ou correspondances |
+| `drive_search`, `drive_read` | Jeton Google Drive défini | Requête ou identifiant | Fichiers et contenu textuel |
+| `mcp_<serveur>_<outil>` | Configuration MCP présente | Schéma annoncé par le serveur | Résultat MCP normalisé |
 
 ## Calculer
 
