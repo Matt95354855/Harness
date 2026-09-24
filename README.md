@@ -4,7 +4,6 @@
 
 > **Où se trouve l’application ?** Le code, l’interface et le mode découverte sont sur la branche [`feature/platform-production-foundation`](https://github.com/Matt95354855/Mass_Classification/tree/feature/platform-production-foundation). La [pull request vers `main`](https://github.com/Matt95354855/Mass_Classification/pull/1) est ouverte. Le présent README donne le parcours utilisateur et la vue d’ensemble ; le [guide technique](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md) détaille les commandes d’exploitation et les limites de chaque composant.
 
-> **Tester sans installation :** [ouvrir la console interactive Classcale IA](https://qv7m2r.matthieu994329.chatgpt.site/application/). Elle reprend l’interface du dépôt et les principaux parcours du mode découverte avec des données fictives. Pour cet essai hébergé, les routes de démonstration sont exécutées dans le navigateur et les imports sont conservés dans son stockage local : **ce n’est pas le serveur Python FastAPI ni la plateforme complète**. N’y importez pas de pièce confidentielle. Utilisez « Réinitialiser » pour retrouver les trois exemples initiaux.
 
 ## Essayer l’interface en quelques minutes
 
@@ -29,38 +28,6 @@ Ouvrir **http://127.0.0.1:8000/**, puis :
 Le serveur d’essai écoute sur `127.0.0.1`. Ses imports et revues sont enregistrés dans `.mass-demo/` sur votre machine. Pour repartir de zéro, arrêter le serveur puis supprimer ce dossier **en sachant que cela efface aussi vos imports et revues locaux**. Pour changer de port : `python -m mass_classification.demo --port 8080`.
 
 Le mode découverte réalise une **recherche lexicale** et une analyse par règles. Il n’exécute pas l’OCR, la transcription, les embeddings multilingues ou le réseau neuronal de la plateforme complète. Sa bannière le rappelle dans l’interface.
-
-### Essai de bout en bout vérifié le 23 septembre 2026
-
-J’ai lancé le serveur du dépôt sur `127.0.0.1` avec un dossier de données vierge, parcouru son interface et exercé son API HTTP. Les trois pièces chargées automatiquement et la pièce importée ci-dessous sont **fictives** ; les nombres indiquent les réponses de cet essai, pas des mesures de qualité du modèle ou de performance en production.
-
-| Action effectuée | Résultat observé |
-| --- | --- |
-| Ouverture de `/`, `/health/live` et `/v1/session` | Interface accessible, santé `ok`, session `demo` |
-| Lecture des documents et de la chronologie | 3 pièces fictives initiales ; 3 entrées de chronologie |
-| Recherche `virement Nova` | 5 passages renvoyés avec la limite par défaut de 5 ; chaque résultat renvoie à une pièce |
-| Recherche `photosynthèse` | 0 passage sur ce jeu de démonstration |
-| Question `Alice Martin` | 3 citations de passages, méthode `demo:lexical_retrieval` |
-| Exploration des relations | 1 relation issue d’un passage, avec identifiant de pièce et extrait justificatif |
-| Import de `test-orion.txt` contenant `Facture fictive de 20 EUR pour le dossier Orion. Aucun paiement reel.` | HTTP `202`, pièce immédiatement `ready` ; domaines `finance` et `enquete` à `0,43` chacun, priorité de revue `16` selon `demo:rules:v1` |
-| Réimport du même contenu ; revue `finance` | Doublon détecté avec le même identifiant ; revue consignée dans le journal local |
-| Exports et contrôle de format | Inventaire CSV et rapport PDF générés ; fichier `.exe` refusé avec HTTP `415` |
-
-**Interprétation :** les valeurs `0,43` et `16` sont calculées par des règles de démonstration. Elles ne sont ni des probabilités calibrées ni un diagnostic. Le champ `predictions` de la pièce importée reste à `unavailable` : aucun modèle entraîné et approuvé n’a été exécuté. La recherche est lexicale ; une réponse sans citation pour une autre formulation ne prouve rien sur la qualité de la recherche vectorielle du service complet.
-
-Pour refaire l’essai sans toucher à vos imports existants, démarrer le mode découverte avec un dossier neuf, puis interroger l’API dans un autre terminal :
-
-```bash
-MASS_DEMO_DATA_DIR=.mass-demo-essai python -m mass_classification.demo --port 8080
-# Dans un autre terminal :
-curl -s http://127.0.0.1:8080/health/live
-curl -s -H 'Content-Type: application/json' \
-  -d '{"query":"virement Nova"}' http://127.0.0.1:8080/v1/search
-curl -s -H 'Content-Type: application/json' \
-  -d '{"query":"Alice Martin"}' http://127.0.0.1:8080/v1/ask
-```
-
-Le serveur conserve les imports et revues dans `.mass-demo-essai/`. Les réponses suivantes changent si vous y ajoutez des pièces. Les tests ciblés `tests/test_api.py` et `tests/test_demo.py` ont passé (**3 tests réussis**, avec les dépendances de test locales). La suite entière n'a pas pu être collectée dans cet environnement faute de `numpy` ; cela ne constitue pas un échec fonctionnel établi des autres modules. Le service complet avec PostgreSQL, Redis, OCR, embeddings et worker n’a pas été exécuté lors de cet essai : Docker n’était pas disponible dans l’environnement de vérification.
 
 ## Comprendre les deux modes
 
