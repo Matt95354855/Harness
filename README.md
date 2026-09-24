@@ -2,7 +2,7 @@
 
 **Un moteur d'exécution TypeScript pour construire, connecter, observer et tester des agents IA, avec une configuration locale prête pour Qwen3.5 et `llama.cpp`.**
 
-Le harness peut relier un LLM local à des serveurs MCP, GitHub, des dossiers locaux autorisés, Google Drive et des pages Web publiques. Ces capacités sont désactivées par défaut et s'activent explicitement.
+Le harness peut relier un LLM local à des serveurs MCP, GitHub, des dossiers locaux autorisés, Google Drive et Internet. Chaque connexion reste désactivée par défaut et ne se charge que lorsqu'elle est explicitement configurée et autorisée.
 
 [![CI](https://github.com/Matt95354855/Harness/actions/workflows/ci.yml/badge.svg)](https://github.com/Matt95354855/Harness/actions/workflows/ci.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A5%2022.13-417E38)
@@ -11,6 +11,20 @@ Le harness peut relier un LLM local à des serveurs MCP, GitHub, des dossiers lo
 Harness prend une demande, choisit une action, exécute les outils autorisés, conserve les résultats utiles et produit une réponse. Chaque exécution dispose de limites explicites et d'une trace structurée pour comprendre ce qui s'est passé.
 
 Le projet démarre avec un modèle simulé et des résultats de recherche de démonstration. **Aucune clé API ni aucun téléchargement de modèle n'est nécessaire pour le tester.** Les fixtures sont identifiées comme telles : elles ne constituent pas une recherche web en direct.
+
+## Capacités connectées
+
+Harness transforme un modèle de langage en agent capable d'utiliser des services externes à travers une couche d'exécution contrôlée :
+
+- **Model Context Protocol** : connexion aux serveurs MCP distants en Streamable HTTP et aux serveurs locaux en `stdio`, découverte de leurs outils et intégration automatique dans le registre du Harness ;
+- **GitHub** : accès au serveur MCP officiel pour consulter les dépôts, fichiers, commits, branches, issues, pull requests, versions et résultats de recherche, avec une configuration en lecture seule fournie par défaut ;
+- **fichiers locaux** : exploration de dossiers autorisés, lecture de fichiers texte et recherche de contenu sans accès global au système de fichiers ;
+- **Google Drive** : recherche de documents et lecture de contenus textuels avec une autorisation OAuth limitée à la lecture ;
+- **Internet** : recherche via un fournisseur HTTP ou SearXNG et lecture directe de pages publiques avec validation des URL, contrôle des redirections et limites de taille ;
+- **sélection des capacités** : `ALLOWED_TOOLS` limite les outils disponibles et empêche le chargement des connexions qui ne sont pas nécessaires à la demande ;
+- **traçabilité** : chaque décision, appel d'outil, résultat, erreur et consommation déclarée de jetons reste visible dans la trace d'exécution.
+
+Les connecteurs manipulent les données externes comme des contenus non fiables. Les permissions, délais, tailles maximales et listes d'autorisation restent appliqués avant que les résultats soient transmis au modèle.
 
 ## Démarrage rapide
 
@@ -70,8 +84,8 @@ Le [guide du modèle local](docs/local-model.md) donne l'installation exacte, la
 | Boucle d'agent | Actions `SEARCH`, `TOOL`, `REFLECT` et `RESPOND`, avec validation des décisions. |
 | Client de modèle | Fournisseur simulé et client HTTP compatible avec `/v1/chat/completions`. |
 | Connexions MCP | Serveurs distants en Streamable HTTP et serveurs locaux en `stdio`, avec découverte automatique des outils. |
-| Applications | GitHub en MCP, fichiers locaux en lecture seule et Google Drive avec OAuth. |
-| Internet | Recherche configurable et lecture bornée de pages Web publiques. |
+| Applications | GitHub par MCP, fichiers locaux en lecture seule et Google Drive avec OAuth limité. |
+| Internet | Recherche configurable et lecture sécurisée de pages Web publiques. |
 | Outils extensibles | Registre typé, validation des paramètres, liste d'autorisation et délai maximal. |
 | Recherche | Fixtures hors ligne, endpoint JSON configurable et adaptateur SearXNG. |
 | Mémoire | Conversations, faits avec expiration, décisions et statistiques d'utilisation. |
@@ -161,7 +175,7 @@ Voir [l'API publique](docs/api.md) pour ajouter un outil, choisir un fournisseur
 
 ## Exemples et qualité
 
-La validation initiale comprend **88 tests réussis** et **98,16 % de couverture des lignes**. Le [rapport de validation](docs/validation.md) précise l'environnement, les mesures et ce qui reste à vérifier avec un vrai modèle.
+La suite automatisée comprend **93 tests unitaires et d'intégration**. Le [rapport de validation](docs/validation.md) précise l'environnement, les mesures historiques et ce qui reste à vérifier avec un vrai modèle et des services externes.
 
 ```bash
 npm run example:basic
@@ -189,7 +203,7 @@ src/
 ├── core/          # Configuration, contrats et orchestration
 ├── models/        # Client LLM, simulation et templates
 ├── hermes/        # Décision et réflexion structurées
-├── tools/         # Recherche, registre et exécuteur
+├── tools/         # MCP, GitHub, Drive, Web, fichiers, registre et exécuteur
 ├── memory/        # Conversation et traces
 ├── utils/         # Journaux et parsing
 ├── cli.ts         # Interface en ligne de commande
@@ -215,6 +229,7 @@ Les correspondances, corrections et critères des **14 phases** sont détaillés
 - [Architecture et limites](docs/architecture.md)
 - [API publique](docs/api.md)
 - [Catalogue des outils](docs/tools.md)
+- [Configurer MCP et les connexions externes](docs/connections.md)
 - [Brancher un modèle local](docs/local-model.md)
 - [Suivi des 14 phases](docs/implementation-status.md)
 - [Rapport de validation initiale](docs/validation.md)
