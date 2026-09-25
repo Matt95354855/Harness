@@ -4,7 +4,6 @@
 
 > **Où se trouve l’application ?** Le code, l’interface et le mode découverte sont sur la branche [`feature/platform-production-foundation`](https://github.com/Matt95354855/Mass_Classification/tree/feature/platform-production-foundation). La [pull request vers `main`](https://github.com/Matt95354855/Mass_Classification/pull/1) est ouverte. Le présent README donne le parcours utilisateur et la vue d’ensemble ; le [guide technique](https://github.com/Matt95354855/Mass_Classification/blob/feature/platform-production-foundation/docs/README_TECHNIQUE.md) détaille les commandes d’exploitation et les limites de chaque composant.
 
-
 ## Essayer l’interface en quelques minutes
 
 **Pré-requis :** Python 3.11 ou plus récent. Le mode découverte ne demande ni compte, ni Docker, ni téléchargement de modèle. Les trois pièces initiales sont fictives.
