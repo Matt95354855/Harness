@@ -54,6 +54,9 @@ npm run demo -- --json
 
 # Exécuter les contrôles du projet
 npm run check
+
+# Produire une preuve concise avec le modèle et les connexions configurés
+GITHUB_TOKEN="$(gh auth token)" npm run acceptance
 ```
 
 Le mode `mock` suit des scénarios déterministes. Il permet de vérifier l'orchestration ; il ne mesure pas l'intelligence d'un modèle et ne répond pas librement à toutes les questions.
@@ -193,6 +196,7 @@ npm run benchmark
 | `npm run build` | Compilation ESM et déclarations TypeScript dans `dist/`. |
 | `npm start -- run "Bonjour"` | Exécution de la version compilée. |
 | `npm run benchmark` | Mesure locale de l'orchestration avec un modèle simulé. |
+| `npm run acceptance` | Recette réelle et concise : vérifie les appels d'outils et conserve un rapport de preuve. |
 
 Les tests HTTP utilisent des doubles contrôlés et un serveur de test sur `127.0.0.1` pour vérifier les requêtes, les erreurs et la gestion des réponses. Ils ne certifient pas un fournisseur distant. Les benchmarks simulés ne mesurent ni la vitesse d'inférence ni la qualité d'un LLM réel.
 
@@ -230,6 +234,7 @@ Les correspondances, corrections et critères des **14 phases** sont détaillés
 - [API publique](docs/api.md)
 - [Catalogue des outils](docs/tools.md)
 - [Configurer MCP et les connexions externes](docs/connections.md)
+- [Produire des preuves publiques](docs/public-validation.md)
 - [Brancher un modèle local](docs/local-model.md)
 - [Suivi des 14 phases](docs/implementation-status.md)
 - [Rapport de validation initiale](docs/validation.md)

@@ -38,7 +38,8 @@
     "example:basic": "tsx examples/basic-search.ts",
     "example:advanced": "tsx examples/advanced-agent.ts",
     "example:multi-hop": "tsx examples/multi-hop-reasoning.ts",
-    "benchmark": "tsx scripts/benchmark.ts"
+    "benchmark": "tsx scripts/benchmark.ts",
+    "acceptance": "tsx scripts/acceptance.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.1",
