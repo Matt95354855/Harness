@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Mass Classification">
+  <rect width="192" height="192" rx="44" fill="#101c2f"/>
+  <rect x="32" y="32" width="128" height="128" rx="31" fill="#159b80"/>
+  <rect x="62" y="61" width="28" height="28" rx="6" fill="#e8fff5"/>
+  <rect x="102" y="61" width="28" height="28" rx="6" fill="#b4f0d9"/>
+  <rect x="62" y="101" width="28" height="28" rx="6" fill="#c8f8e5"/>
+  <rect x="102" y="101" width="28" height="28" rx="6" fill="#e8fff5"/>
+</svg>

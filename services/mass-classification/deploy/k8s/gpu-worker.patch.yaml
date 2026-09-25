@@ -1,0 +1,14 @@
+# Optional strategic merge patch. Requires device plugin, CUDA PyTorch image and a GPU node.
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mass-worker}
+spec:
+  template:
+    spec:
+      containers:
+      - name: worker
+        env:
+        - {name: MASS_DEVICE, value: cuda}
+        resources:
+          requests: {cpu: '2', memory: 4Gi, nvidia.com/gpu: '1'}
+          limits: {cpu: '4', memory: 12Gi, nvidia.com/gpu: '1'}

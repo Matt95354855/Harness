@@ -1,0 +1,5 @@
+# Local discovery mode: no database server or downloaded ML model.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+python-multipart>=0.0.12,<1
+reportlab>=4,<5
