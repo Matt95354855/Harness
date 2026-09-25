@@ -1,4 +1,21 @@
-# Harness
+# Classcale Unified Platform
+
+**Une plateforme unifiée qui réunit un harness d'agents IA TypeScript et le service Python Mass Classification dans un même dépôt.**
+
+Le harness orchestre les modèles, les outils, la mémoire et les traces. Mass Classification, conservé dans [`services/mass-classification`](services/mass-classification), fournit l'ingestion documentaire, l'extraction multimodale, la classification explicable, la recherche, le graphe et les modèles topologiques conditionnés à des poids approuvés.
+
+Cette branche pose la fondation du monorepo sans encore coupler les deux moteurs. Le contrat d'intégration, le profilage des entrées et le routage adaptatif sont décrits dans la [feuille de route de la plateforme unifiée](docs/unified-platform.md).
+
+## Composants
+
+| Composant | Technologie | Responsabilité |
+| --- | --- | --- |
+| Harness | TypeScript / Node.js | Orchestration, outils, politiques d'exécution, mémoire et traçabilité |
+| Mass Classification | Python / FastAPI | Ingestion, extraction, indexation, classification et preuves |
+
+Les historiques Git des deux projets sont conservés. Le service Python reste également disponible dans son dépôt d'origine pendant la transition ; les évolutions communes devront être réalisées depuis ce monorepo une fois la branche d'intégration validée.
+
+## Harness
 
 **Un moteur d'exécution TypeScript pour construire, connecter, observer et tester des agents IA, avec une configuration locale prête pour Qwen3.5 et `llama.cpp`.**
 
@@ -220,6 +237,8 @@ Les tests HTTP utilisent des doubles contrôlés et un serveur de test sur `127.
 ## Structure du dépôt
 
 ```text
+services/
+└── mass-classification/ # Service Python de classification et d'analyse
 src/
 ├── core/          # Configuration, contrats et orchestration
 ├── models/        # Client LLM, simulation et templates

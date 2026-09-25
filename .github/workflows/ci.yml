@@ -48,3 +48,24 @@ jobs:
       - name: Measure offline harness overhead
         if: matrix.node == 24
         run: npm run benchmark
+
+  mass-classification-demo:
+    name: Mass Classification demo
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/mass-classification
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: services/mass-classification/requirements-demo.txt
+      - name: Install demo dependencies
+        run: python -m pip install -r requirements-demo.txt pytest httpx
+      - name: Verify Python sources
+        run: python -m compileall -q mass_classification
+      - name: Verify discovery workflow
+        run: python -m pytest -q tests/test_demo.py

@@ -1,0 +1,91 @@
+# Reference deployment. Provide a RWX volume or object-store adapter for shared document bytes.
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mass-api}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: mass-api}}
+  template:
+    metadata: {labels: {app: mass-api}}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, fsGroup: 10001}
+      containers:
+      - name: api
+        image: registry.example.org/mass-classification:0.1.0
+        ports: [{containerPort: 8000}]
+        envFrom: [{secretRef: {name: mass-config}}]
+        resources:
+          requests: {cpu: 500m, memory: 2Gi}
+          limits: {cpu: '2', memory: 8Gi}
+        readinessProbe: {httpGet: {path: /health/ready, port: 8000}, initialDelaySeconds: 15}
+        livenessProbe: {httpGet: {path: /health/live, port: 8000}, initialDelaySeconds: 15}
+        volumeMounts: [{name: data, mountPath: /var/lib/mass/data}, {name: models, mountPath: /var/lib/mass/models, readOnly: true}]
+      volumes:
+      - name: data
+        persistentVolumeClaim: {claimName: mass-data-rwx}
+      - name: models
+        persistentVolumeClaim: {claimName: mass-models}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mass-worker}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: mass-worker}}
+  template:
+    metadata: {labels: {app: mass-worker}}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, fsGroup: 10001}
+      containers:
+      - name: worker
+        image: registry.example.org/mass-classification:0.1.0
+        command: [mass-worker]
+        envFrom: [{secretRef: {name: mass-config}}]
+        resources:
+          requests: {cpu: '2', memory: 4Gi}
+          limits: {cpu: '4', memory: 12Gi}
+        volumeMounts: [{name: data, mountPath: /var/lib/mass/data}, {name: models, mountPath: /var/lib/mass/models, readOnly: true}]
+      volumes:
+      - name: data
+        persistentVolumeClaim: {claimName: mass-data-rwx}
+      - name: models
+        persistentVolumeClaim: {claimName: mass-models}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: mass-api}
+spec:
+  selector: {app: mass-api}
+  ports: [{port: 80, targetPort: 8000}]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: {name: mass-api}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: mass-api}
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: {type: Utilization, averageUtilization: 70}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: mass-api}
+spec:
+  minAvailable: 1
+  selector: {matchLabels: {app: mass-api}}
+---
+# Default deny is scoped to this application's pods; allow only named peers.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: mass-api-ingress}
+spec:
+  podSelector: {matchLabels: {app: mass-api}}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector: {matchLabels: {mass-api-clients: "true"}}
+    ports: [{protocol: TCP, port: 8000}]
