@@ -49,7 +49,7 @@ La route authentifiée `GET /v1/capabilities` expose cet ordre, les limites acti
 
 1. Définir le contrat commun de classification et ses statuts.
 2. Exposer les capacités réellement disponibles dans Mass Classification. **En cours : PDF et DOCX uniquement, OCR en première étape.**
-3. Créer l'adaptateur HTTP asynchrone dans Harness.
+3. Créer l'adaptateur HTTP asynchrone dans Harness. **En cours : soumission, statut, preuves et feedback.**
 4. Ajouter le profilage déterministe des entrées.
 5. Construire le routeur adaptatif et ses règles d'abstention.
 6. Ajouter les tests de bout en bout sur données synthétiques.
