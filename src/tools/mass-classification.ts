@@ -1,4 +1,5 @@
 import { open, realpath, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { basename, extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import type { JsonValue, Tool, ToolContext } from '../core/types.js';
 import { abortable } from './runtime.js';
@@ -158,6 +159,17 @@ export class MassClassificationTools {
         },
       },
     ];
+    if (this.roots.length) tools.push({
+      name: 'mass_profile_document', description: 'Inspect a local PDF/DOCX before upload: bounded file size, basic signature and SHA-256. Structural profiling is performed by the service before OCR.',
+      parameters: [{ name: 'path', type: 'string', description: 'PDF/DOCX inside MASS_INPUT_ROOTS.', required: true }],
+      execute: async ({ path }) => {
+        const file = await this.allowedFile(path);
+        return { version: 'local-document-profile:v1', format: extname(file.name).toLowerCase(), bytes: file.bytes.byteLength,
+          sha256: createHash('sha256').update(file.bytes).digest('hex'), mime: file.mime,
+          validation: 'signature_only', structure: 'pending_server_validation', ocrRequired: true,
+          language: 'unknown', ocrQuality: 'not_measured', sensitivity: 'not_assessed' };
+      },
+    });
     if (this.roots.length) tools.splice(1, 0, {
       name: 'mass_submit_document', description: 'Submit one PDF or DOCX from an explicitly authorized local root for asynchronous OCR-first classification.',
       parameters: [{ name: 'path', type: 'string', description: 'Absolute PDF or DOCX path inside MASS_INPUT_ROOTS.', required: true }, { name: 'source', type: 'object', description: 'Optional small provenance metadata object.', required: false }],

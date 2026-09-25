@@ -1,7 +1,7 @@
 name: Mass real end-to-end
 on:
   push:
-    branches: [test/classification-end-to-end]
+    branches: [test/classification-end-to-end, feature/document-profiling]
   workflow_dispatch:
 permissions:
   contents: read
@@ -42,6 +42,7 @@ jobs:
           pip install -e './services/mass-classification[test]'
           python -m spacy download xx_ent_wiki_sm
           python scripts/mass-fixtures.py
+          python -m pytest -q services/mass-classification/tests/test_profiling.py
       - name: Run actual API, worker and Harness adapter
         shell: bash
         run: |
