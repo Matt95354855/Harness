@@ -26,6 +26,23 @@ Harness transforme un modèle de langage en agent capable d'utiliser des service
 
 Les connecteurs manipulent les données externes comme des contenus non fiables. Les permissions, délais, tailles maximales et listes d'autorisation restent appliqués avant que les résultats soient transmis au modèle.
 
+## État de validation publique
+
+La recette d'acceptation du 25 septembre 2026 a été exécutée avec **Qwen3.5 0.8B Q8_0 sur CPU**, à partir de données publiques ou non sensibles. Elle produit une preuve compacte à partir des traces réelles, sans publier de jeton ni de contenu personnel.
+
+| Statut observé | Scénario | Preuve obtenue |
+| --- | --- | --- |
+| Réussi | Calcul déterministe | Résultat `60` retourné par `calculate` |
+| Réussi | Liste de fichiers locaux | `package.json` retrouvé dans la racine autorisée |
+| À stabiliser | Lecture d'un fichier local | Une décision structurée invalide a été produite par le modèle avant l'appel d'outil |
+| Réussi | Recherche dans les fichiers | `mcp-client.ts` retrouvé par `local_search` |
+| Réussi | Lecture d'Internet | `Example Domain` récupéré par `web_fetch` |
+| Réussi | GitHub par MCP | Dépôt public `Matt95354855/agent-harness` consulté |
+| Non configuré | Recherche Internet générale | Fournisseur de recherche et endpoint encore absents |
+| Non configuré | Google Drive | Autorisation OAuth de lecture encore absente |
+
+Ce résultat décrit une exécution précise : **5 scénarios réussis, 1 scénario à stabiliser et 2 connexions non configurées**. Il ne transforme pas un test ignoré en réussite et met en évidence la différence entre le fonctionnement du Harness et la fiabilité décisionnelle d'un très petit modèle. La procédure reproductible est décrite dans le [protocole de preuves publiques](docs/public-validation.md).
+
 ## Démarrage rapide
 
 Prérequis : **Node.js 22.13 ou plus récent**, avec npm. La CI couvre Node.js 22 et 24.
