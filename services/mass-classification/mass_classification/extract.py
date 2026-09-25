@@ -51,6 +51,39 @@ def _transcribe(path: Path, model_name: str) -> str:
     return " ".join(segment.text for segment in segments)
 
 
+def _combine_ocr_and_native(ocr_text: str, native_text: str) -> str:
+    """Keep OCR first and add native structure when it contributes more text."""
+    ocr_text, native_text = ocr_text.strip(), native_text.strip()
+    if not ocr_text:
+        return native_text
+    if not native_text or native_text.casefold() in ocr_text.casefold():
+        return ocr_text
+    return f"{ocr_text}\n{native_text}"
+
+
+def _ocr_docx_images(path: Path) -> tuple[list[str], int]:
+    """OCR bounded raster media before DOCX native text and table extraction."""
+    from PIL import Image, UnidentifiedImageError
+    import pytesseract
+    texts: list[str] = []
+    processed = 0
+    with zipfile.ZipFile(path) as archive:
+        media = [member for member in archive.infolist()
+                 if not member.is_dir() and member.filename.startswith("word/media/")]
+        if len(media) > 200 or sum(member.file_size for member in media) > 100_000_000:
+            raise ExtractionError("DOCX embedded image limit exceeded")
+        for member in media:
+            try:
+                with Image.open(io.BytesIO(archive.read(member))) as image:
+                    if image.width * image.height > 80_000_000:
+                        raise ExtractionError("DOCX embedded image pixel limit exceeded")
+                    texts.append(pytesseract.image_to_string(image))
+                    processed += 1
+            except UnidentifiedImageError:
+                continue
+    return texts, processed
+
+
 def extract(path: Path, filename: str, asr_model: str = "small", depth: int = 0) -> tuple[str, dict]:
     """Return extracted text and metadata; raise on unsupported or corrupt input."""
     if depth > 2:
@@ -58,8 +91,10 @@ def extract(path: Path, filename: str, asr_model: str = "small", depth: int = 0)
     suffix = Path(filename).suffix.lower()
     raw_head = path.open("rb").read(16)
     meta: dict = {"format": suffix, "bytes": path.stat().st_size}
-    if raw_head.startswith(b"%PDF"):
-        import fitz
+    if suffix == ".pdf":
+        if not raw_head.startswith(b"%PDF"):
+            raise ExtractionError("File extension and PDF signature do not match")
+        import pymupdf as fitz
         from PIL import Image
         import pytesseract
         with fitz.open(path) as pdf:
@@ -67,12 +102,12 @@ def extract(path: Path, filename: str, asr_model: str = "small", depth: int = 0)
                 raise ExtractionError("PDF page limit exceeded")
             pages = []
             for page in pdf:
-                content = page.get_text()
-                if len(content.strip()) < 20:
-                    pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
-                    content += pytesseract.image_to_string(Image.open(io.BytesIO(pix.tobytes("png"))))
-                pages.append(content)
+                pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
+                ocr_text = pytesseract.image_to_string(Image.open(io.BytesIO(pix.tobytes("png"))))
+                native_text = page.get_text()
+                pages.append(_combine_ocr_and_native(ocr_text, native_text))
             meta["pages"] = len(pdf)
+            meta.update({"preprocessing": "ocr_first", "ocr_pages": len(pdf), "native_text_extracted": True})
             text = "\n".join(pages)
     elif suffix in {".png", ".jpg", ".jpeg", ".webp", ".bmp"}:
         from PIL import Image, ExifTags
@@ -88,11 +123,20 @@ def extract(path: Path, filename: str, asr_model: str = "small", depth: int = 0)
                                 if ExifTags.TAGS.get(k, k) not in ("GPSInfo", "MakerNote")}
             text = pytesseract.image_to_string(img)
     elif suffix == ".docx":
+        if not zipfile.is_zipfile(path):
+            raise ExtractionError("File extension and DOCX container do not match")
+        with zipfile.ZipFile(path) as archive:
+            names = set(archive.namelist())
+            if "[Content_Types].xml" not in names or "word/document.xml" not in names:
+                raise ExtractionError("Invalid DOCX container")
         from docx import Document
+        image_texts, image_count = _ocr_docx_images(path)
         document = Document(path)
-        text = "\n".join([p.text for p in document.paragraphs] +
-                         [" | ".join(c.text for c in r.cells) for t in document.tables for r in t.rows])
+        native_text = "\n".join([p.text for p in document.paragraphs] +
+                                [" | ".join(c.text for c in r.cells) for t in document.tables for r in t.rows])
+        text = _combine_ocr_and_native("\n".join(image_texts), native_text)
         meta["author"] = document.core_properties.author
+        meta.update({"preprocessing": "ocr_first", "ocr_images": image_count, "native_tables": len(document.tables)})
     elif suffix == ".xlsx":
         from openpyxl import load_workbook
         book = load_workbook(path, read_only=True, data_only=True)
