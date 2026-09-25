@@ -26,7 +26,7 @@ export async function createConfiguredToolRuntime(env: NodeJS.ProcessEnv = proce
   if (massUrl && massKey && enabledPrefix('mass_')) {
     const massRoots = env.MASS_INPUT_ROOTS?.split(',').map(value => value.trim()).filter(Boolean) ?? [];
     const maxUpload = env.MASS_MAX_UPLOAD_BYTES === undefined ? undefined : Number(env.MASS_MAX_UPLOAD_BYTES);
-    const mass = await MassClassificationTools.create({ endpoint: massUrl, apiKey: massKey, inputRoots: enabled('mass_submit_document') ? massRoots : [], maxUploadBytes: maxUpload, enableFeedback: allowed?.includes('mass_submit_feedback') ?? false });
+    const mass = await MassClassificationTools.create({ endpoint: massUrl, apiKey: massKey, inputRoots: enabled('mass_submit_document', 'mass_profile_document') ? massRoots : [], maxUploadBytes: maxUpload, enableFeedback: allowed?.includes('mass_submit_feedback') ?? false });
     const selected = mass.tools().filter(tool => enabled(tool.name)); for (const tool of selected) registry.register(tool);
     if (selected.length) capabilities.push('mass-classification');
   }
