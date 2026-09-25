@@ -68,4 +68,4 @@ jobs:
       - name: Verify Python sources
         run: python -m compileall -q mass_classification
       - name: Verify discovery workflow
-        run: python -m pytest -q tests/test_demo.py
+        run: python -m pytest -q tests/test_demo.py tests/test_capabilities.py

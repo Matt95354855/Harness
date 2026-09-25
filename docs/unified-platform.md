@@ -35,10 +35,20 @@ Entrée
 5. Les décisions sensibles conservent une revue humaine et une possibilité d'abstention.
 6. Les secrets, clés API et contenus sensibles ne sont pas écrits dans les traces.
 
+## Contrat documentaire initial
+
+La plateforme unifiée accepte uniquement les fichiers PDF et DOCX. Ils peuvent contenir du texte, des images et des tableaux. Le prétraitement suit cet ordre :
+
+1. OCR Tesseract des pages PDF et des images incorporées aux DOCX ;
+2. extraction native du texte PDF, des paragraphes DOCX et des cellules de tableaux DOCX ;
+3. normalisation, segmentation, analyse et classification.
+
+La route authentifiée `GET /v1/capabilities` expose cet ordre, les limites actives, la disponibilité de Tesseract et celle d'un éventuel checkpoint approuvé. Pour les PDF, les tableaux sont d'abord restitués comme texte OCR ; la structure exacte des cellules n'est pas garantie à ce stade.
+
 ## Prochaines étapes
 
 1. Définir le contrat commun de classification et ses statuts.
-2. Exposer les capacités réellement disponibles dans Mass Classification.
+2. Exposer les capacités réellement disponibles dans Mass Classification. **En cours : PDF et DOCX uniquement, OCR en première étape.**
 3. Créer l'adaptateur HTTP asynchrone dans Harness.
 4. Ajouter le profilage déterministe des entrées.
 5. Construire le routeur adaptatif et ses règles d'abstention.
