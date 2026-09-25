@@ -54,6 +54,23 @@ WEB_ACCESS=true
 
 `web_fetch` accepte seulement HTTP(S), refuse les identifiants dans l'URL, les destinations privées ou locales, les types non textuels et les réponses supérieures à 1 Mo. Il suit au plus trois redirections en revalidant chaque destination. Le contenu Web reste une donnée non fiable susceptible de contenir une injection de prompt.
 
+## Mass Classification
+
+L'adaptateur natif relie Harness à l'API asynchrone de Mass Classification. Le jeton reste dans la configuration du processus et n'est jamais transmis au modèle comme paramètre d'outil.
+
+```dotenv
+MASS_CLASSIFICATION_URL=http://127.0.0.1:8000
+MASS_CLASSIFICATION_API_KEY=mc_votre_cle
+MASS_INPUT_ROOTS=/chemin/autorise/documents
+MASS_MAX_UPLOAD_BYTES=52428800
+```
+
+Les chemins sont résolus sous leur forme canonique ; les liens symboliques sortant des racines sont refusés. Seuls les PDF et DOCX dont la signature correspond à l'extension peuvent être envoyés. `mass_submit_document` renvoie immédiatement le document et la tâche. `mass_get_document` permet au Harness de suivre `queued`, `processing`, `ready` ou `failed` sans injecter le texte intégral du document dans le contexte du modèle.
+
+Les consommateurs TypeScript peuvent utiliser `MassClassificationTools.waitForDocument()` pour une attente bornée avec annulation. L'agent conserve des appels courts afin que ses propres limites d'outil restent effectives.
+
+Le feedback est désactivé par défaut : ajouter explicitement `mass_submit_feedback` à `ALLOWED_TOOLS` pour un parcours de revue humaine. Cette autorisation ne prouve pas qu'un humain a validé chaque décision ; l'application appelante doit fournir cette validation. Les passages de recherche et les analyses peuvent contenir des informations sensibles dans les traces : configurer leur conservation en conséquence. La signature DOCX côté client vérifie seulement le conteneur ZIP ; le service contrôle sa structure Word.
+
 ## Vérification
 
 ```bash

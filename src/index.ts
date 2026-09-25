@@ -14,6 +14,7 @@ export { PidevTool } from './tools/pidev-tool.js';
 export { LocalFileTools } from './tools/local-files.js';
 export { WebFetchTool } from './tools/web-fetch.js';
 export { GoogleDriveTools } from './tools/google-drive.js';
+export { MassClassificationTools, type MassClassificationOptions } from './tools/mass-classification.js';
 export { McpConnections } from './tools/mcp-client.js';
 export { createConfiguredToolRuntime, type ConfiguredToolRuntime } from './tools/configured-runtime.js';
 export { ConversationMemory } from './memory/conversation.js';
