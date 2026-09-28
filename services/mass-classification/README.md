@@ -21,7 +21,7 @@ Le parcours de production accepte les **PDF et DOCX contenant du texte, des imag
 4. Les passages sont indexés ; NLP, règles et graphe produisent les analyses. Le profil est conservé dans `metadata.input_profile`.
 5. Résultats, preuves et retours humains sont accessibles par l'API.
 
-Les statuts de traitement sont `queued`, `processing`, `ready` et `failed`. Une priorité de revue n'est pas une probabilité de fraude. Sans checkpoint approuvé compatible, le TNN ne fournit pas de prédiction. Le contrat métier unifié et l'abstention restent à développer.
+Les statuts de traitement sont `queued`, `processing`, `ready` et `failed`. Le [contrat métier v1](../../docs/classification-result.md) ajoute un résultat normalisé et une abstention lorsqu'aucune règle ne fournit d'étiquette. Une priorité de revue n'est pas une probabilité de fraude. Sans checkpoint approuvé compatible, le TNN ne fournit pas de prédiction.
 
 ## Routes utilisées par Harness
 

@@ -34,6 +34,9 @@ for (const extension of ['pdf', 'docx']) {
   if (extension === 'docx') assert.equal(raw.metadata.input_profile.tables, 1);
   else assert.equal(raw.metadata.input_profile.pages, 1);
   assert.equal(raw.analysis.labels.method, 'rules:v1');
+  assert.equal(raw.classification_result.version, 'classification-result:v1');
+  assert.equal(raw.classification_result.status, 'classified');
+  assert.equal(raw.classification_result.labels[0].score_kind, 'heuristic');
   const duplicate = await call('mass_submit_document', { path: resolve(`fixtures/sample.${extension}`) });
   assert.equal(duplicate.id, uploaded.id); assert.equal(duplicate.duplicate, true);
   await call('mass_submit_feedback', { documentId: String(uploaded.id), label: 'banking', accepted: true });
