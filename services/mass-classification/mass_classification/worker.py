@@ -7,6 +7,7 @@ import signal
 import time
 import uuid
 import threading
+import shutil
 
 from psycopg.types.json import Jsonb
 
@@ -16,6 +17,7 @@ from .db import transaction, migrate, audit, tenant_embedding
 from .embedding import embed
 from .extract import extract, chunks, ExtractionError
 from .profiling import profile_document
+from .routing import classification_plan
 from .topology import graph_metrics, persistent_homology, incidence
 
 log = logging.getLogger(__name__)
@@ -46,8 +48,17 @@ def process(job):
     if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != doc["sha256"]:
         raise ValueError("Stored file checksum mismatch")
     profile = profile_document(path, doc['filename'], cfg.max_upload_bytes)
+    plan = classification_plan(profile, ocr_available=shutil.which('tesseract') is not None)
+    with transaction() as conn:
+        conn.execute('UPDATE documents SET metadata=%s WHERE id=%s AND tenant_id=%s',
+                     (Jsonb({'input_profile': profile, 'classification_plan': plan}), doc['id'], job['tenant_id']))
+        audit(conn, job['tenant_id'], 'worker', 'classification_planned', str(doc['id']),
+              {'version': plan['version'], 'route': plan['route'], 'status': plan['status'], 'reasons': plan['reasons']})
+    if plan['status'] == 'blocked':
+        raise ExtractionError('Classification plan blocked: ' + ', '.join(plan['reasons']))
     text, metadata = extract(path, doc["filename"], cfg.asr_model)
     metadata['input_profile'] = profile
+    metadata['classification_plan'] = plan
     pieces = chunks(text)[:500]
     truncated = len(text) > 500 * 800
     vectors = embed(pieces, model_name)

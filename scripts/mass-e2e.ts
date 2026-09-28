@@ -26,6 +26,9 @@ for (const extension of ['pdf', 'docx']) {
   assert.match(raw.content, /1250/u, 'Table amount must survive extraction');
   assert.equal(raw.metadata.preprocessing, 'ocr_first');
   assert.equal(raw.metadata.input_profile.sha256, profile.sha256);
+  assert.equal(raw.metadata.classification_plan.status, 'planned');
+  assert.equal(raw.metadata.classification_plan.input_sha256, profile.sha256);
+  assert.equal(raw.metadata.classification_plan.stages[0], extension === 'pdf' ? 'ocr_pdf_pages' : 'ocr_docx_images');
   assert.equal(raw.metadata.input_profile.native_text_present, true);
   assert.ok(raw.metadata.input_profile.images >= 1);
   if (extension === 'docx') assert.equal(raw.metadata.input_profile.tables, 1);

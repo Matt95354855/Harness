@@ -51,7 +51,7 @@ La route authentifiée `GET /v1/capabilities` expose cet ordre et les limites co
 2. Capacités implémentées : PDF et DOCX uniquement dans l'API de production, OCR en première étape, limites de détection précisées ci-dessus.
 3. Adaptateur HTTP implémenté et testé avec services réels : soumission, statut, analyse, preuves et feedback.
 4. Profilage déterministe implémenté : `mass_profile_document` vérifie localement la taille, la signature et l'empreinte sans transfert. Le worker analyse ensuite la structure avant OCR et conserve `metadata.input_profile` avec l'analyse.
-5. Construire le routeur adaptatif et ses règles d'abstention.
+5. Première version du routeur déterministe livrée : parcours PDF/DOCX et blocage technique avant OCR. Adaptation à la qualité et abstention métier à poursuivre.
 6. Fusion multi-modèles et garde-fous : à réaliser après le contrat de résultat et le routage.
 7. Évaluation métier : corpus annoté, calibration et mesures de qualité à constituer.
 8. Recette de bout en bout : premier parcours synthétique réussi ; extension aux erreurs, à l'isolation inter-tenants et à la fiabilité du LLM à poursuivre.
@@ -65,4 +65,12 @@ Le profil local ne contient ni texte extrait ni chemin du document. Il vérifie 
 
 Le profil serveur calcule le SHA-256, compte les pages PDF, références d'images PDF, médias DOCX et tableaux XML DOCX. Il signale la présence de texte natif sans l'inclure dans le profil. Les fichiers chiffrés nécessitant un mot de passe, corrompus ou dépassant les limites sont rejetés avant OCR. Les archives DOCX sont bornées en taille décompressée et en nombre d'entrées ; les déclarations DTD et entités du XML principal sont rejetées.
 
-Les pages DOCX et les tableaux PDF restent inconnus sans rendu ou analyse de mise en page. La langue, la sensibilité et la qualité OCR ne sont pas déduites de la seule structure : elles restent respectivement `unknown`, `not_assessed` et `not_measured`. Les compteurs d'images n'évaluent pas leur contenu. L'OCR reste obligatoire. Le routeur adaptatif de l'étape 5 n'est pas encore implémenté.
+Les pages DOCX et les tableaux PDF restent inconnus sans rendu ou analyse de mise en page. La langue, la sensibilité et la qualité OCR ne sont pas déduites de la seule structure : elles restent respectivement `unknown`, `not_assessed` et `not_measured`. Les compteurs d'images n'évaluent pas leur contenu. L'OCR reste obligatoire.
+
+## Plan d'exécution v1
+
+Le worker construit un plan déterministe depuis le profil validé et la présence de Tesseract sur sa propre machine. Un PDF sélectionne `pdf_ocr_native` ; un DOCX sélectionne `docx_image_ocr_native_tables`. Les deux parcours conservent les règles, embeddings et graphe existants. Cette version n'effectue ni sélection de modèle par qualité, ni arbitrage par LLM.
+
+Le plan est persisté dans `metadata.classification_plan` et un événement `classification_planned` est audité avant l'extraction. Harness peut le consulter via `mass_get_document`, y compris après un blocage OCR. `planned` signifie qu'un parcours a été sélectionné, pas que le traitement a réussi : utiliser le statut du document pour cela.
+
+Si Tesseract manque, le plan devient `blocked` et le document échoue explicitement. Aucun repli silencieux vers le seul texte natif n'est utilisé. Le blocage technique n'est pas une abstention de classification. Les poids topologiques restent conditionnels au checkpoint et au graphe ; leur présence ne garantit pas leur qualité. Le contrat métier de l'étape 1 reste un préalable à l'abstention normalisée.
