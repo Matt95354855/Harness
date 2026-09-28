@@ -4,7 +4,7 @@
 
 Harness est raccordé au service Python dans `services/mass-classification` par `MassClassificationTools`. L'adaptateur propose le profil local, la soumission multipart, les capacités, le suivi, l'analyse, la recherche de preuves et le feedback activable explicitement. La file persistante appartient au service Python ; annuler une attente ne supprime pas une tâche déjà soumise.
 
-Le worker profile la structure avant OCR. Le routage adaptatif et le contrat normalisé de résultat restent à développer. Voir le [guide unifié](unified-platform.md) et la [validation documentaire](document-validation.md).
+Le worker profile la structure avant OCR. Le routage déterministe et le contrat de résultat v1 sont implémentés ; l'adaptation avancée reste à développer. Voir le [guide unifié](unified-platform.md) et la [validation documentaire](document-validation.md).
 
 ## Responsabilités
 

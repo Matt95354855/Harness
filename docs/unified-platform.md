@@ -43,7 +43,7 @@ La plateforme unifiée accepte uniquement les fichiers PDF et DOCX. Ils peuvent 
 2. extraction native du texte PDF, des paragraphes DOCX et des cellules de tableaux DOCX ;
 3. normalisation, segmentation, analyse et classification.
 
-La route authentifiée `GET /v1/capabilities` expose cet ordre et les limites configurées. La détection OCR vérifie la présence de l'exécutable Tesseract sur l'hôte API ; celle du TNN vérifie la présence de `approved.pt` et `approved.json`. Ces contrôles ne prouvent ni la disponibilité sur un worker distant, ni la compatibilité ou la qualité des poids. Le champ `abstention_supported` du contrat actuel ne constitue pas une implémentation de l'abstention métier : celle-ci reste à formaliser à l'étape 1. Pour les PDF, la structure exacte des cellules des tableaux n'est pas garantie.
+La route authentifiée `GET /v1/capabilities` expose cet ordre et les limites configurées. La détection OCR vérifie la présence de l'exécutable Tesseract sur l'hôte API ; celle du TNN vérifie la présence de `approved.pt` et `approved.json`. Ces contrôles ne prouvent ni la disponibilité sur un worker distant, ni la compatibilité ou la qualité des poids. Le champ `abstention_supported` du contrat actuel ne constitue pas une implémentation de l'abstention métier : son périmètre est défini par le contrat de résultat v1. Pour les PDF, la structure exacte des cellules des tableaux n'est pas garantie.
 
 ## État et travaux restants
 
@@ -73,4 +73,4 @@ Le worker construit un plan déterministe depuis le profil validé et la présen
 
 Le plan est persisté dans `metadata.classification_plan` et un événement `classification_planned` est audité avant l'extraction. Harness peut le consulter via `mass_get_document`, y compris après un blocage OCR. `planned` signifie qu'un parcours a été sélectionné, pas que le traitement a réussi : utiliser le statut du document pour cela.
 
-Si Tesseract manque, le plan devient `blocked` et le document échoue explicitement. Aucun repli silencieux vers le seul texte natif n'est utilisé. Le blocage technique n'est pas une abstention de classification. Les poids topologiques restent conditionnels au checkpoint et au graphe ; leur présence ne garantit pas leur qualité. Le contrat métier de l'étape 1 reste un préalable à l'abstention normalisée.
+Si Tesseract manque, le plan devient `blocked` et le document échoue explicitement. Aucun repli silencieux vers le seul texte natif n'est utilisé. Le blocage technique n'est pas une abstention de classification. Les poids topologiques restent conditionnels au checkpoint et au graphe ; leur présence ne garantit pas leur qualité. Le contrat v1 formalise désormais l'abstention en absence d'étiquette par règles.

@@ -24,7 +24,7 @@ Le workflow est déclenché sur les branches explicitement listées dans son fic
 ## Ce qui reste à évaluer
 
 - Sélection autonome des outils par le LLM et routage adaptatif.
-- Contrat métier normalisé et abstention, encore non implémentés.
+- Abstention calibrée et normalisation des sorties neuronales, au-delà du contrat de règles v1.
 - Précision OCR sur scans dégradés, langues et mises en page variées.
 - Qualité de classification sur corpus annoté indépendant ; TNN entraîné et calibré.
 - Isolation inter-tenants de bout en bout, reprise après panne, charge et restauration.
