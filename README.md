@@ -4,7 +4,32 @@
 
 Le harness orchestre les modèles, les outils, la mémoire et les traces. Mass Classification, conservé dans [`services/mass-classification`](services/mass-classification), fournit l'ingestion documentaire, l'extraction multimodale, la classification explicable, la recherche, le graphe et les modèles topologiques conditionnés à des poids approuvés.
 
-Cette branche pose la fondation du monorepo sans encore coupler les deux moteurs. Le contrat d'intégration, le profilage des entrées et le routage adaptatif sont décrits dans la [feuille de route de la plateforme unifiée](docs/unified-platform.md).
+Le raccordement HTTP et le profilage des documents sont implémentés et testés avec les services réels. Le parcours de production accepte les **PDF et DOCX contenant du texte, des images et des tableaux**. L'OCR précède l'extraction native ; les résultats conservent leurs sources et leur profil d'entrée.
+
+Cette documentation décrit la branche de développement unifiée, pas encore fusionnée dans `main`. Le routage adaptatif, le contrat de résultat normalisé et l'abstention métier restent à construire.
+
+## Avancement de la plateforme
+
+| Étape | État | Livraison |
+| --- | --- | --- |
+| 0 — Unification | Réalisée sur branche | Deux historiques conservés, service Python intégré, CI commune |
+| 1 — Contrat de résultat | À formaliser | Les statuts métier `classified`, `partial`, `abstained`, `failed` ne sont pas encore implémentés |
+| 2 — Capacités | Implémentée | Route authentifiée `/v1/capabilities`, périmètre PDF/DOCX, ordre OCR puis extraction native |
+| 3 — Adaptateur | Implémentée et testée de bout en bout | Envoi multipart, suivi, analyse, preuves, feedback explicitement activable |
+| 4 — Profilage | Implémentée et testée de bout en bout | Signature, taille, SHA-256 ; structure inspectée par le worker avant OCR |
+| 5 — Routage adaptatif | À réaliser | Choix du parcours selon le profil et les capacités |
+
+Le [guide de la plateforme](docs/unified-platform.md) détaille les comportements et limites. Le [guide de démarrage documentaire](docs/document-workflow.md) fournit la configuration et un exemple exécutable.
+
+## Validation du parcours documentaire
+
+La recette utilise PostgreSQL/pgvector, Redis, l'API, le worker, Tesseract et les embeddings réels. Les PDF/DOCX synthétiques contiennent texte natif, image et tableau. Elle vérifie le profil, l'OCR, la classification par règles, la déduplication, le feedback, la recherche vectorielle et le refus d'accès sans clé.
+
+- **98 tests Harness** et **10 tests Python ciblés** réussis lors de l'étape 4.
+- [Parcours réel avec profilage : réussi en 2 min 28 s](https://github.com/Matt95354855/Harness/actions/runs/36142880989).
+- Le [rapport de validation documentaire](docs/document-validation.md) distingue cette preuve des tests historiques et des validations restantes.
+
+La recette pilote directement l'adaptateur ; elle n'évalue pas le choix autonome des outils par un LLM, la précision d'un TNN entraîné ou la charge de production.
 
 ## Composants
 
@@ -65,11 +90,13 @@ Ce résultat décrit une exécution précise : **5 scénarios réussis, 1 scéna
 Prérequis : **Node.js 22.13 ou plus récent**, avec npm. La CI couvre Node.js 22 et 24.
 
 ```bash
-git clone https://github.com/Matt95354855/Harness.git
+git clone --branch docs/unified-platform-status https://github.com/Matt95354855/Harness.git
 cd Harness
 npm ci
 npm run demo
 ```
+
+La branche est précisée tant que la plateforme unifiée n'est pas fusionnée dans `main`. Cette commande démarre la démonstration Harness ; pour le traitement PDF/DOCX avec OCR, suivre le [guide documentaire](docs/document-workflow.md).
 
 La démonstration fait fonctionner le harness de bout en bout : décision, outil de recherche simulée et synthèse. L'installation des dépendances nécessite une connexion ; la démonstration et les tests fonctionnent ensuite sans fournisseur externe.
 
@@ -212,7 +239,7 @@ Voir [l'API publique](docs/api.md) pour ajouter un outil, choisir un fournisseur
 
 ## Exemples et qualité
 
-La suite automatisée comprend **93 tests unitaires et d'intégration**. Le [rapport de validation](docs/validation.md) précise l'environnement, les mesures historiques et ce qui reste à vérifier avec un vrai modèle et des services externes.
+La suite Harness comprend **98 tests unitaires et d'intégration** sur cette branche. Le [rapport initial](docs/validation.md) conserve les mesures historiques ; le [rapport documentaire actuel](docs/document-validation.md) décrit les tests Python et les recettes avec services réels.
 
 ```bash
 npm run example:basic
@@ -267,6 +294,9 @@ Les correspondances, corrections et critères des **14 phases** sont détaillés
 ## Documentation et contribution
 
 - [Architecture et limites](docs/architecture.md)
+- [État de la plateforme unifiée](docs/unified-platform.md)
+- [Démarrer le parcours PDF/DOCX](docs/document-workflow.md)
+- [Validation documentaire](docs/document-validation.md)
 - [API publique](docs/api.md)
 - [Catalogue des outils](docs/tools.md)
 - [Configurer MCP et les connexions externes](docs/connections.md)

@@ -1,5 +1,7 @@
 # Mass Classification
 
+> Cette référence conserve les fonctions du service d'origine. Dans la branche unifiée, l'API de production accepte uniquement PDF/DOCX, le worker profile les documents avant OCR et l'OCR précède l'extraction native. Les exemples d'import texte et descriptions d'OCR de repli ci-dessous sont historiques. Pour le parcours actuel, utiliser le [guide documentaire](../../../docs/document-workflow.md) et le [rapport de validation](../../../docs/document-validation.md).
+
 Plateforme Python d’ingestion, de classification et d’exploration de pièces volumineuses, orientée données bancaires et enquêtes. Les résultats relient les signaux à des documents et restent soumis à une **revue humaine**. Aucun score heuristique ne constitue une probabilité de fraude, une preuve d’intention ou une conclusion policière.
 
 Le [guide fourni](GUIDE_CONSTRUCTION_PLATEFORME_COMPLETE.md) décrit des techniques confirmées, proposées et hypothétiques. Ce dépôt en transforme une partie en code exploitable et **identifie explicitement les composants dépendant de données, de validation ou d’infrastructure**. Il n’annonce pas une performance de 10 millions de documents sans essai de charge.

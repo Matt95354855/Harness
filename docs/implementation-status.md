@@ -1,5 +1,7 @@
 # Suivi du cahier des charges
 
+Ce document conserve le suivi historique des 14 phases du moteur Harness. Les étapes de la plateforme documentaire constituent une feuille de route distincte : voir le [guide unifié](unified-platform.md) et le [rapport documentaire](document-validation.md) pour leur état actuel.
+
 Ce document relie les 14 phases de `AGENT_HARNESS_IMPLEMENTATION.md` à l'implémentation du dépôt. Le cahier des charges est une référence fonctionnelle : les exemples incomplets ou les noms de services inexacts ont été corrigés au lieu d'être reproduits tels quels.
 
 ## Correspondance des 14 phases
@@ -71,4 +73,4 @@ npm run benchmark
 
 Les tests de transport HTTP utilisent des réponses contrôlées. Le cache et les budgets font l'objet de tests dédiés ; le benchmark décrit un coût d'orchestration simulé, pas une mesure de débit d'inférence.
 
-Le raccordement à un LLM installé sur la machine et la validation d'une recherche réelle constituent l'étape suivante, volontairement séparée. La procédure figure dans [local-model.md](local-model.md). Le harness ne prétend pas offrir de sandbox système, de service multi-utilisateur, de stockage distribué ou de garantie de résistance aux injections de prompt.
+Depuis cette validation initiale, des scénarios avec un modèle local ont été exécutés et documentés dans [public-validation.md](public-validation.md). Le parcours documentaire avec services réels est décrit dans [document-validation.md](document-validation.md). Ces validations ne garantissent pas la fiabilité générale du LLM. Le moteur Harness n'offre pas de sandbox système, de service multi-utilisateur ou de stockage distribué.
