@@ -80,6 +80,8 @@ Ce calcul ne calibre pas le modèle, ne mesure pas l'incertitude statistique et 
 
 ## Recette et suites
 
+Validation sur le commit `a8b3373` : 98 tests Harness et 56 tests Python ciblés réussis, dont 20 nouveaux tests d'évaluation. La [recette avec services réels](https://github.com/Matt95354855/Harness/actions/runs/36589037305) a réussi et son artefact `synthetic-classification-evaluation` a été vérifié : deux documents, deux classifications `banking` attendues, F1 micro égal à 1 sur ces seuls exemples. Aucune sortie neuronale disponible : Brier/ECE à `null`, aucune approbation. La CI Node 22/24 et Python est également réussie.
+
 Les tests unitaires vérifient les formules sur des cas calculables à la main, les partitions, les sorties incohérentes, les formats absents, les diagnostics neuronaux, la reproductibilité et la protection des rapports existants.
 
 La recette GitHub `Mass real end-to-end` exporte les résultats réels de ses PDF/DOCX synthétiques, les compare aux annotations `banking` fixées dans le scénario et conserve le rapport comme artefact. Un score parfait sur ces deux pièces n'est pas une estimation de précision réelle.

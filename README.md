@@ -31,6 +31,7 @@ La recette utilise PostgreSQL/pgvector, Redis, l'API, le worker, Tesseract et le
 - [Parcours réel avec profilage : réussi en 2 min 28 s](https://github.com/Matt95354855/Harness/actions/runs/36142880989).
 - Le [rapport de validation documentaire](docs/document-validation.md) distingue cette preuve des tests historiques et des validations restantes.
 - Étape 6 : 98 tests Harness et 36 tests Python ciblés réussis ; [parcours réel avec garde-fous réussi](https://github.com/Matt95354855/Harness/actions/runs/36535694357). Détails dans le [bilan de fusion](docs/classification-fusion.md).
+- Étape 7 : 98 tests Harness et 56 tests Python ciblés réussis ; [parcours réel avec rapport d'évaluation réussi](https://github.com/Matt95354855/Harness/actions/runs/36589037305). Deux documents synthétiques correctement classés ne constituent pas une mesure de précision métier.
 
 La recette pilote directement l'adaptateur ; elle n'évalue pas le choix autonome des outils par un LLM, la précision d'un TNN entraîné ou la charge de production.
 
