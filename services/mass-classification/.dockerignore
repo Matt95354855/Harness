@@ -1,0 +1,12 @@
+.git
+.env
+.venv
+.demo-venv
+.mass-demo
+_test_deps
+_wheels
+.tmp
+__pycache__
+*.pyc
+tests
+upload

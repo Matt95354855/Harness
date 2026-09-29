@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101c2f">
+  <meta name="description" content="Mass Classification, console de classification et d'analyse de documents avec preuves vérifiables.">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+  <title>Mass Classification — Console</title>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navigation principale">
+      <a class="brand" href="#overview" aria-label="Mass Classification, accueil"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span><strong>Mass<span>Classify</span></strong><small>Investigation workspace</small></span></a>
+      <div class="workspace-label">ESPACE DE TRAVAIL</div>
+      <nav class="nav" id="nav">
+        <button type="button" class="nav-item active" data-page="overview"><span class="nav-icon" aria-hidden="true">▦</span><span>Vue d’ensemble</span></button>
+        <button type="button" class="nav-item" data-page="documents"><span class="nav-icon" aria-hidden="true">▤</span><span>Documents</span><span id="nav-count" class="nav-count">0</span></button>
+        <button type="button" class="nav-item" data-page="search"><span class="nav-icon" aria-hidden="true">⌕</span><span>Recherche</span></button>
+        <button type="button" class="nav-item" data-page="graph"><span class="nav-icon" aria-hidden="true">◇</span><span>Relations</span></button>
+        <button type="button" class="nav-item" data-page="timeline"><span class="nav-icon" aria-hidden="true">▥</span><span>Chronologie</span></button>
+        <button type="button" class="nav-item" data-page="audit"><span class="nav-icon" aria-hidden="true">◷</span><span>Journal d’audit</span></button>
+      </nav>
+      <div class="sidebar-bottom"><div class="sidebar-rule"></div><span class="sidebar-help-title">Une analyse responsable</span><p>Chaque résultat renvoie à une pièce. Une personne vérifie avant toute décision.</p><a href="https://github.com/Matt95354855/Mass_Classification" target="_blank" rel="noopener noreferrer">Documentation ↗</a></div>
+    </aside>
+
+    <div class="main-column">
+      <header class="topbar">
+        <div class="topbar-start"><button type="button" id="menu-toggle" class="icon-button menu-toggle" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><div class="breadcrumb"><span>Workspace</span><span class="slash">/</span><strong id="breadcrumb-current">Vue d’ensemble</strong></div></div>
+        <div class="topbar-end"><span id="mode-pill" class="mode-pill">Connexion requise</span><span id="connection" class="connection"><span class="status-dot"></span> Hors ligne</span><button type="button" id="disconnect" class="text-button hidden">Déconnexion</button><div class="avatar" aria-hidden="true">MC</div></div>
+      </header>
+      <div class="demo-ribbon hidden" id="demo-ribbon"><strong>Mode découverte local</strong> <span>Données d’exemple fictives. Recherche textuelle simplifiée et aucun modèle entraîné.</span></div>
+      <main id="main">
+        <div id="notice" class="notice hidden" role="status" aria-live="polite"></div>
+
+        <section id="overview" class="page">
+          <div class="page-intro"><div><span class="eyebrow">VOTRE ESPACE D’ANALYSE</span><h1>La clarté au cœur<br>de chaque enquête<span class="accent">.</span></h1><p>Rassemblez vos pièces, explorez les liens et gardez la preuve à portée de main.</p></div><div class="intro-actions"><button type="button" class="button primary" data-action="open-upload">Importer une pièce <span aria-hidden="true">↗</span></button><button type="button" class="button secondary" data-action="go-search">Explorer les données</button></div></div>
+          <div class="stats-grid" aria-label="Indicateurs des documents affichés">
+            <article class="stat-card"><div class="stat-top"><span>Pièces récentes</span><span class="stat-symbol blue">▤</span></div><strong id="doc-count">—</strong><small>Sur les 100 dernières pièces</small></article>
+            <article class="stat-card"><div class="stat-top"><span>Analyses terminées</span><span class="stat-symbol green">✓</span></div><strong id="ready-count">—</strong><small>Consultables avec leur source</small></article>
+            <article class="stat-card"><div class="stat-top"><span>En traitement</span><span class="stat-symbol amber">◷</span></div><strong id="queued-count">—</strong><small>Importées ou en cours d’analyse</small></article>
+          </div>
+          <div class="dashboard-grid">
+            <section class="card recent-card"><div class="card-head"><div><span class="eyebrow">BIBLIOTHÈQUE</span><h2>Pièces récentes</h2></div><button type="button" class="link-button" data-action="go-documents">Voir tout <span aria-hidden="true">→</span></button></div><div id="recent-list" class="recent-list"></div></section>
+            <section class="card workflow-card"><div class="card-head"><div><span class="eyebrow">MÉTHODE</span><h2>De la pièce à la preuve</h2></div></div><div class="workflow"><div><span class="step-number">01</span><div><strong>Importer</strong><p>Ajoutez une pièce et sa provenance.</p></div></div><div><span class="step-number">02</span><div><strong>Explorer</strong><p>Retrouvez les passages et les relations sourcées.</p></div></div><div><span class="step-number">03</span><div><strong>Vérifier</strong><p>Consignez votre avis et exportez un rapport.</p></div></div></div><button type="button" class="button subtle" data-action="go-search">Lancer une recherche <span aria-hidden="true">→</span></button></section>
+          </div>
+          <section class="card quick-card"><div><span class="eyebrow">IMPORT RAPIDE</span><h2>Une nouvelle pièce à examiner ?</h2><p>Déposez un fichier pour le retrouver dans votre espace de travail.</p></div><button type="button" class="button dark" data-action="open-upload">Importer un document <span aria-hidden="true">↗</span></button></section>
+        </section>
+
+        <section id="documents" class="page hidden"><div class="section-heading"><div><span class="eyebrow">BIBLIOTHÈQUE</span><h1>Documents</h1><p>Vos pièces, leur provenance et l’état de leur analyse.</p></div><div class="heading-actions"><button type="button" id="csv" class="button secondary">Exporter CSV</button><button type="button" class="button primary" data-action="open-upload">+ Importer</button></div></div><div class="card table-card"><div class="table-controls"><label class="search-field"><span class="sr-only">Filtrer les documents</span><span aria-hidden="true">⌕</span><input id="document-filter" type="search" placeholder="Filtrer par nom ou source…"></label><button type="button" id="refresh" class="button secondary compact">Actualiser</button></div><div class="table-wrap"><table><thead><tr><th>Pièce</th><th>Provenance</th><th>État</th><th>Importation</th><th><span class="sr-only">Action</span></th></tr></thead><tbody id="documents-list"></tbody></table></div></div></section>
+
+        <section id="search" class="page hidden"><div class="section-heading"><div><span class="eyebrow">EXPLORATION</span><h1>Rechercher dans les pièces</h1><p>Une question, des passages retrouvés et la pièce qui permet de les vérifier.</p></div></div><div class="search-layout"><section class="card search-card"><form id="ask"><label for="query">Votre recherche</label><div class="query-row"><input id="query" name="query" type="search" minlength="2" maxlength="1000" required placeholder="Ex. Quels virements mentionnent le compte Nova ?"><button class="button primary" type="submit">Rechercher <span aria-hidden="true">→</span></button></div></form><div class="suggestions"><span>Essayer :</span><button type="button" data-query="virement Nova">virement Nova</button><button type="button" data-query="Alice Martin Banque Atlas">Alice Martin</button><button type="button" data-query="justificatif facture">justificatifs</button></div><div id="answer" class="results"><div class="empty-results"><span class="empty-symbol">⌕</span><h2>Les réponses commencent ici</h2><p>Posez une question pour obtenir des extraits rattachés aux documents.</p></div></div></section><aside class="card context-card"><span class="eyebrow">BONNE PRATIQUE</span><h2>Lire le contexte</h2><p>Les extraits servent à retrouver une piste. Ouvrez toujours la pièce complète avant de rédiger une conclusion.</p><div class="context-note">Les scores reflètent une similarité de recherche, pas la fiabilité d’une source.</div></aside></div></section>
+
+        <section id="graph" class="page hidden"><div class="section-heading"><div><span class="eyebrow">CARTOGRAPHIE</span><h1>Relations documentées</h1><p>Chaque lien présenté correspond à un passage identifiable dans une pièce.</p></div></div><div class="card"><div class="card-head"><h2>Liens extraits</h2><span class="soft-badge">Revue humaine requise</span></div><div id="graph-list" class="stack"></div></div></section>
+
+        <section id="timeline" class="page hidden"><div class="section-heading"><div><span class="eyebrow">CHRONOLOGIE</span><h1>Repères temporels</h1><p>Une date déclarée par la source est distinguée de la date d’importation. Vérifiez toujours la pièce.</p></div></div><div class="card"><div class="card-head"><h2>Pièces dans le temps</h2><span class="soft-badge">Dates de provenance à contrôler</span></div><div id="timeline-list" class="timeline-list" aria-live="polite"></div></div></section>
+
+        <section id="audit" class="page hidden"><div class="section-heading"><div><span class="eyebrow">TRAÇABILITÉ</span><h1>Journal d’audit</h1><p>Les consultations, imports et revues visibles pour votre espace.</p></div></div><div class="card"><div id="audit-list" class="stack"></div></div></section>
+      </main>
+      <footer>Mass Classification <span>·</span> Les résultats sont des pistes vérifiables, jamais des décisions automatiques.</footer>
+    </div>
+  </div>
+
+  <div id="auth-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title"><form id="auth" class="auth-card"><span class="brand-symbol large" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="eyebrow">BIENVENUE</span><h2 id="auth-title">Accédez à votre espace</h2><p>Saisissez la clé créée lors de l’installation pour consulter les pièces de votre espace.</p><label for="token">Clé API</label><input id="token" type="password" autocomplete="off" placeholder="mc_…" required><button type="submit" class="button primary">Ouvrir l’espace <span aria-hidden="true">→</span></button><small>La clé reste uniquement dans la session de ce navigateur.</small></form></div>
+
+  <div id="upload-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="upload-title"><form id="upload" class="modal-card"><div class="modal-head"><div><span class="eyebrow">NOUVELLE PIÈCE</span><h2 id="upload-title">Importer un document</h2></div><button type="button" class="icon-button" data-action="close-upload" aria-label="Fermer">×</button></div><p>Ajoutez une source compréhensible pour faciliter les vérifications ultérieures.</p><label id="dropzone" class="dropzone" for="file"><span class="drop-icon" aria-hidden="true">↑</span><strong id="drop-title">Glissez un fichier ici ou parcourez vos fichiers</strong><span id="drop-hint">Taille maximale : 50 Mio en mode complet</span></label><input id="file" name="file" type="file" required class="sr-only"><label for="source" class="field-label">Provenance ou référence du dossier</label><input id="source" name="source" type="text" maxlength="200" placeholder="Ex. dossier Atlas, lot avril 2026"><p id="upload-error" class="form-error hidden" role="alert"></p><div class="modal-actions"><button type="button" class="button secondary" data-action="close-upload">Annuler</button><button type="submit" class="button primary" id="upload-submit">Importer la pièce</button></div></form></div>
+
+  <div id="detail-overlay" class="drawer-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="detail-title"><div class="drawer"><div class="drawer-head"><div><span class="eyebrow">FICHE DOCUMENT</span><h2 id="detail-title">Pièce</h2><p id="detail-meta"></p></div><button type="button" class="icon-button" data-action="close-detail" aria-label="Fermer la fiche">×</button></div><div id="detail-content" class="drawer-body"></div><form id="feedback" class="review-form"><h3>Consigner une revue</h3><div class="review-grid"><label>Étiquette examinée<input name="label" required placeholder="Ex. finance"></label><label>Décision<select name="accepted"><option value="true">Confirmer</option><option value="false">Infirmer</option></select></label></div><label>Note de l’analyste<input name="comment" maxlength="2000" placeholder="Motif de votre décision"></label><div class="review-actions"><button type="button" id="pdf" class="button secondary">Rapport PDF</button><button type="submit" class="button primary">Enregistrer la revue</button></div></form></div></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
