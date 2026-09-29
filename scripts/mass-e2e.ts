@@ -37,6 +37,11 @@ for (const extension of ['pdf', 'docx']) {
   assert.equal(raw.classification_result.version, 'classification-result:v1');
   assert.equal(raw.classification_result.status, 'classified');
   assert.equal(raw.classification_result.labels[0].score_kind, 'heuristic');
+  assert.equal(raw.classification_result.fusion.policy, 'fusion:conservative:v1');
+  assert.equal(raw.classification_result.fusion.selected_engine, 'rules:v1');
+  assert.equal(raw.classification_result.fusion.neural_status, 'unavailable');
+  assert.deepEqual(raw.classification_result.fusion.neural_scores, {});
+  assert.equal(raw.classification_result.human_review_required, true);
   const duplicate = await call('mass_submit_document', { path: resolve(`fixtures/sample.${extension}`) });
   assert.equal(duplicate.id, uploaded.id); assert.equal(duplicate.duplicate, true);
   await call('mass_submit_feedback', { documentId: String(uploaded.id), label: 'banking', accepted: true });

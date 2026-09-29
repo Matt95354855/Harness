@@ -23,6 +23,8 @@ Le parcours de production accepte les **PDF et DOCX contenant du texte, des imag
 
 Les statuts de traitement sont `queued`, `processing`, `ready` et `failed`. Le [contrat métier v1](../../docs/classification-result.md) ajoute un résultat normalisé et une abstention lorsqu'aucune règle ne fournit d'étiquette. Une priorité de revue n'est pas une probabilité de fraude. Sans checkpoint approuvé compatible, le TNN ne fournit pas de prédiction.
 
+L'étape 6 ajoute une [politique de fusion conservatrice](../../docs/classification-fusion.md) : scores séparés, contrôle des sorties neuronales, signalement des désaccords et revue humaine obligatoire. Aucun score neuronal ne renforce automatiquement les règles tant qu'une calibration vérifiée n'est pas prise en charge.
+
 ## Routes utilisées par Harness
 
 | Route | Usage |

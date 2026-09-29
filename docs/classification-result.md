@@ -9,7 +9,7 @@ Le statut du document reste `queued`, `processing`, `ready` ou `failed`. `classi
 | Statut | Condition v1 |
 | --- | --- |
 | `classified` | Étiquettes par règles présentes, sans troncature d'index signalée |
-| `partial` | Étiquettes présentes, indexation signalée comme tronquée |
+| `partial` | Étiquettes présentes avec index tronqué, sortie neuronale rejetée, désaccord ou ambiguïté neuronale |
 | `abstained` | Analyse terminée sans étiquette par règles |
 | `failed` | Échec du traitement, analyse manquante ou méthode non prise en charge |
 
@@ -26,7 +26,8 @@ Le statut du document reste `queued`, `processing`, `ready` ou `failed`. `classi
 - `human_review_required` : toujours vrai ; ne prouve pas qu'une revue a été réalisée.
 - `model_version` : `rules:v1`, ou `null` sans analyse exploitable.
 - `neural_prediction_status` : `unavailable` ou `available_uncalibrated`. Les prédictions brutes restent dans `analysis.predictions` ; aucun mélange de scores n'est effectué.
+- `fusion` : ajout de l'étape 6, politique versionnée, contributions distinctes, disponibilité neuronale, accord et garde-fous. Voir la [politique de fusion](classification-fusion.md). Un rejet neuronal est précisé dans `fusion.neural_status`; le champ historique indique alors `unavailable`.
 
 Le profil et le plan restent dans les métadonnées existantes. Les erreurs techniques restent au niveau du document. Le résultat est calculé depuis les analyses stockées, sans migration SQL. La démonstration SQLite garde son contrat historique.
 
-La qualité OCR, les seuils calibrés, la provenance par page ou cellule et l'arbitrage entre modèles restent à développer. Ces informations ne sont pas inventées par ce contrat.
+La qualité OCR, les seuils calibrés et la provenance par page ou cellule restent à développer. L'arbitrage conservateur est décrit dans la politique de fusion. Ces informations manquantes ne sont pas inventées par le contrat. L'ajout de `fusion` conserve la version v1 et ses champs existants ; les consommateurs doivent accepter ce champ additionnel et les nouveaux codes de raison.
