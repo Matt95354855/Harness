@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
+import { writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { MassClassificationTools } from '../src/tools/mass-classification.js';
 import type { JsonValue } from '../src/core/types.js';
 
@@ -13,6 +15,8 @@ const call = async (name: string, params: Record<string, string | number | boole
   return result as Record<string, JsonValue>;
 };
 await call('mass_capabilities', {});
+const evaluationDocuments: Record<string, unknown>[] = [];
+const evaluationObservations: Record<string, unknown>[] = [];
 for (const extension of ['pdf', 'docx']) {
   const profile = await call('mass_profile_document', { path: resolve(`fixtures/sample.${extension}`) });
   assert.equal(profile.format, `.${extension}`);
@@ -42,6 +46,9 @@ for (const extension of ['pdf', 'docx']) {
   assert.equal(raw.classification_result.fusion.neural_status, 'unavailable');
   assert.deepEqual(raw.classification_result.fusion.neural_scores, {});
   assert.equal(raw.classification_result.human_review_required, true);
+  evaluationDocuments.push({ document_id: String(uploaded.id), sha256: profile.sha256,
+    group_id: 'synthetic-orion-family', split: 'test', format: extension, labels: ['banking'] });
+  evaluationObservations.push({ sha256: profile.sha256, result: raw.classification_result });
   const duplicate = await call('mass_submit_document', { path: resolve(`fixtures/sample.${extension}`) });
   assert.equal(duplicate.id, uploaded.id); assert.equal(duplicate.duplicate, true);
   await call('mass_submit_feedback', { documentId: String(uploaded.id), label: 'banking', accepted: true });
@@ -52,3 +59,9 @@ assert.ok(Array.isArray(evidence) && evidence.length >= 2);
 assert.ok(evidence.some(item => /ORION/u.test(String(item.text))));
 assert.equal((await fetch(`${endpoint}/v1/capabilities`)).status, 401);
 console.log('Vector evidence search and unauthenticated rejection PASS');
+await writeFile('fixtures/evaluation-corpus.json', JSON.stringify({ version: 'classification-corpus:v1',
+  dataset_id: 'synthetic-orion-e2e', annotation_provenance: 'Authored synthetic banking fixtures; not a business corpus',
+  synthetic: true, documents: evaluationDocuments }, null, 2));
+await writeFile('fixtures/evaluation-run.json', JSON.stringify({ version: 'classification-evaluation-run:v1',
+  run_id: 'real-services-synthetic-documents', source_revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+  configuration_id: 'rules:v1/fusion:conservative:v1/no-checkpoint', observations: evaluationObservations }, null, 2));

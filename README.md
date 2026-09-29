@@ -19,6 +19,7 @@ Cette documentation décrit la branche de développement unifiée, pas encore fu
 | 4 — Profilage | Implémentée et testée de bout en bout | Signature, taille, SHA-256 ; structure inspectée par le worker avant OCR |
 | 5 — Routage | Première version déterministe | Plan PDF ou DOCX persisté avant OCR ; blocage si OCR indisponible ; adaptation avancée à poursuivre |
 | 6 — Fusion et garde-fous | Politique conservatrice implémentée | Contributions séparées, désaccords, rejet des scores invalides et revue humaine ; [limites de calibration](docs/classification-fusion.md) |
+| 7 — Évaluation métier | Outillage implémenté, corpus métier requis | Rapports reproductibles, précision/rappel/F1, abstention, contrôles de partitions et diagnostics neuronaux ; [guide d'évaluation](docs/classification-evaluation.md) |
 
 Le [guide de la plateforme](docs/unified-platform.md) détaille les comportements et limites. Le [guide de démarrage documentaire](docs/document-workflow.md) fournit la configuration et un exemple exécutable.
 
