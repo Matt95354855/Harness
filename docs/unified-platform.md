@@ -50,6 +50,14 @@ La route authentifiée `GET /v1/capabilities` expose cet ordre, les limites acti
 1. Définir le contrat commun de classification et ses statuts.
 2. Exposer les capacités réellement disponibles dans Mass Classification. **En cours : PDF et DOCX uniquement, OCR en première étape.**
 3. Créer l'adaptateur HTTP asynchrone dans Harness. **En cours : soumission, statut, preuves et feedback.**
-4. Ajouter le profilage déterministe des entrées.
+4. Profilage déterministe implémenté : `mass_profile_document` vérifie localement la taille, la signature et l'empreinte sans transfert. Le worker analyse ensuite la structure avant OCR et conserve `metadata.input_profile` avec l'analyse.
 5. Construire le routeur adaptatif et ses règles d'abstention.
 6. Ajouter les tests de bout en bout sur données synthétiques.
+
+## Profilage v1
+
+Le profil local ne contient ni texte extrait ni chemin du document. Il vérifie la signature de base ; pour DOCX, la validité du conteneur Word reste vérifiée sur le serveur. Autoriser `mass_profile_document` dans `ALLOWED_TOOLS` et définir `MASS_INPUT_ROOTS` pour l'utiliser.
+
+Le profil serveur calcule le SHA-256, compte les pages PDF, références d'images PDF, médias DOCX et tableaux XML DOCX. Il signale la présence de texte natif sans l'inclure dans le profil. Les fichiers chiffrés nécessitant un mot de passe, corrompus ou dépassant les limites sont rejetés avant OCR. Les archives DOCX sont bornées en taille décompressée et en nombre d'entrées ; les déclarations DTD et entités du XML principal sont rejetées.
+
+Les pages DOCX et les tableaux PDF restent inconnus sans rendu ou analyse de mise en page. La langue, la sensibilité et la qualité OCR ne sont pas déduites de la seule structure : elles restent respectivement `unknown`, `not_assessed` et `not_measured`. Les compteurs d'images n'évaluent pas leur contenu. L'OCR reste obligatoire. Le routeur adaptatif de l'étape 5 n'est pas encore implémenté.

@@ -14,6 +14,8 @@ const call = async (name: string, params: Record<string, string | number | boole
 };
 await call('mass_capabilities', {});
 for (const extension of ['pdf', 'docx']) {
+  const profile = await call('mass_profile_document', { path: resolve(`fixtures/sample.${extension}`) });
+  assert.equal(profile.format, `.${extension}`);
   const uploaded = await call('mass_submit_document', { path: resolve(`fixtures/sample.${extension}`) });
   assert.equal(typeof uploaded.id, 'string');
   const result = await adapter.waitForDocument(String(uploaded.id), { timeoutMs: 240_000 });
@@ -23,6 +25,11 @@ for (const extension of ['pdf', 'docx']) {
   assert.match(raw.content, /ORION/u, 'Image text must be recovered by real OCR');
   assert.match(raw.content, /1250/u, 'Table amount must survive extraction');
   assert.equal(raw.metadata.preprocessing, 'ocr_first');
+  assert.equal(raw.metadata.input_profile.sha256, profile.sha256);
+  assert.equal(raw.metadata.input_profile.native_text_present, true);
+  assert.ok(raw.metadata.input_profile.images >= 1);
+  if (extension === 'docx') assert.equal(raw.metadata.input_profile.tables, 1);
+  else assert.equal(raw.metadata.input_profile.pages, 1);
   assert.equal(raw.analysis.labels.method, 'rules:v1');
   const duplicate = await call('mass_submit_document', { path: resolve(`fixtures/sample.${extension}`) });
   assert.equal(duplicate.id, uploaded.id); assert.equal(duplicate.duplicate, true);

@@ -54,6 +54,11 @@ test('Mass Classification tools submit authorized PDF and expose bounded asynchr
   const tools = await MassClassificationTools.create({ endpoint: 'https://mass.example.test', apiKey: 'mc_test', inputRoots: [root], fetch: fakeFetch, enableFeedback: true });
   const run = execute(tools.tools());
   assert.equal((await run.execute('mass_capabilities', {})).status, 'completed');
+  const profile = await run.execute('mass_profile_document', { path: pdf });
+  assert.equal(profile.status, 'completed');
+  assert.match(JSON.stringify(profile.result?.data), /signature_only/u);
+  assert.ok(!JSON.stringify(profile.result?.data).includes('synthetic'));
+  assert.equal(requests.length, 1, 'local profiling must not contact the API');
   assert.equal((await run.execute('mass_submit_document', { path: pdf, source: { case: 'D-17' } })).status, 'completed');
   const result = (await run.execute('mass_get_document', { documentId })).result?.data;
   assert.equal(JSON.stringify(result).includes('sensitive raw text'), false); assert.match(JSON.stringify(result), /contentOmitted/u);

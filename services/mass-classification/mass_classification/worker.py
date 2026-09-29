@@ -15,6 +15,7 @@ from .config import settings
 from .db import transaction, migrate, audit, tenant_embedding
 from .embedding import embed
 from .extract import extract, chunks, ExtractionError
+from .profiling import profile_document
 from .topology import graph_metrics, persistent_homology, incidence
 
 log = logging.getLogger(__name__)
@@ -44,7 +45,9 @@ def process(job):
     path = cfg.data_dir / job["tenant_id"] / doc["sha256"]
     if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != doc["sha256"]:
         raise ValueError("Stored file checksum mismatch")
+    profile = profile_document(path, doc['filename'], cfg.max_upload_bytes)
     text, metadata = extract(path, doc["filename"], cfg.asr_model)
+    metadata['input_profile'] = profile
     pieces = chunks(text)[:500]
     truncated = len(text) > 500 * 800
     vectors = embed(pieces, model_name)

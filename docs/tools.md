@@ -11,6 +11,7 @@ Les outils de ce dépôt couvrent les capacités du cahier des charges : recherc
 | `local_list`, `local_read`, `local_search` | `LOCAL_FILE_ROOTS` défini | Chemins autorisés | Liste, contenu ou correspondances |
 | `drive_search`, `drive_read` | Jeton Google Drive défini | Requête ou identifiant | Fichiers et contenu textuel |
 | `mass_capabilities` | URL et clé Mass configurées | Aucun | Formats, OCR, limites et modèles disponibles |
+| `mass_profile_document` | Connexion Mass et racines autorisées | Chemin PDF/DOCX | Profil local : taille, signature, SHA-256 ; aucun transfert |
 | `mass_submit_document` | URL, clé et `MASS_INPUT_ROOTS` configurés | Chemin PDF/DOCX et provenance | Identifiants de document et de tâche asynchrone |
 | `mass_get_document` | URL et clé Mass configurées | Identifiant du document | Statut et analyse bornée, sans contenu brut |
 | `mass_search_evidence` | URL et clé Mass configurées | Requête et limite | Passages classifiés avec provenance |
