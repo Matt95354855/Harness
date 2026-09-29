@@ -31,6 +31,7 @@ mass-train = "mass_classification.training:main"
 mass-connector = "mass_classification.connectors:main"
 mass-tune-embeddings = "mass_classification.tune_embeddings:main"
 mass-reindex = "mass_classification.reindex:main"
+mass-evaluate = "mass_classification.evaluation:main"
 
 [tool.setuptools.package-data]
 mass_classification = ["static/*", "migrations/*.sql"]

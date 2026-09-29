@@ -25,6 +25,8 @@ Les statuts de traitement sont `queued`, `processing`, `ready` et `failed`. Le [
 
 L'étape 6 ajoute une [politique de fusion conservatrice](../../docs/classification-fusion.md) : scores séparés, contrôle des sorties neuronales, signalement des désaccords et revue humaine obligatoire. Aucun score neuronal ne renforce automatiquement les règles tant qu'une calibration vérifiée n'est pas prise en charge.
 
+L'étape 7 ajoute un [évaluateur hors ligne](../../docs/classification-evaluation.md), disponible via `python -m mass_classification.evaluation` ou `mass-evaluate`. Il compare des sorties API figées à un manifeste annoté, contrôle les partitions et les empreintes, puis calcule précision, rappel, F1, abstention et diagnostics neuronaux éligibles. Il n'approuve aucun modèle et ne remplace pas la constitution d'un corpus métier indépendant.
+
 ## Routes utilisées par Harness
 
 | Route | Usage |

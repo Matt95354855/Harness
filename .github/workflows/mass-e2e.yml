@@ -1,7 +1,7 @@
 name: Mass real end-to-end
 on:
   push:
-    branches: [test/classification-end-to-end, feature/document-profiling, feature/classification-routing, feature/classification-result-contract, feature/classification-fusion-guards]
+    branches: [test/classification-end-to-end, feature/document-profiling, feature/classification-routing, feature/classification-result-contract, feature/classification-fusion-guards, feature/classification-evaluation]
   workflow_dispatch:
 permissions:
   contents: read
@@ -60,6 +60,13 @@ jobs:
             sleep 1
           done
           npx tsx scripts/mass-e2e.ts
+          python -m mass_classification.evaluation --corpus fixtures/evaluation-corpus.json --predictions fixtures/evaluation-run.json --output /tmp/mass-evaluation-report.json
+          python -c "import json; r=json.load(open('/tmp/mass-evaluation-report.json')); assert r['overall']['documents'] == 2; assert r['overall']['micro']['f1'] == 1; assert r['synthetic'] is True; assert r['neural_diagnostics']['approval_granted'] is False"
+      - name: Preserve synthetic evaluation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-classification-evaluation
+          path: /tmp/mass-evaluation-report.json
       - name: Diagnostic logs on failure (synthetic data only)
         if: failure()
         run: |

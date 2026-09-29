@@ -19,6 +19,7 @@ Cette documentation décrit la branche de développement unifiée, pas encore fu
 | 4 — Profilage | Implémentée et testée de bout en bout | Signature, taille, SHA-256 ; structure inspectée par le worker avant OCR |
 | 5 — Routage | Première version déterministe | Plan PDF ou DOCX persisté avant OCR ; blocage si OCR indisponible ; adaptation avancée à poursuivre |
 | 6 — Fusion et garde-fous | Politique conservatrice implémentée | Contributions séparées, désaccords, rejet des scores invalides et revue humaine ; [limites de calibration](docs/classification-fusion.md) |
+| 7 — Évaluation métier | Outillage implémenté, corpus métier requis | Rapports reproductibles, précision/rappel/F1, abstention, contrôles de partitions et diagnostics neuronaux ; [guide d'évaluation](docs/classification-evaluation.md) |
 
 Le [guide de la plateforme](docs/unified-platform.md) détaille les comportements et limites. Le [guide de démarrage documentaire](docs/document-workflow.md) fournit la configuration et un exemple exécutable.
 
@@ -30,6 +31,7 @@ La recette utilise PostgreSQL/pgvector, Redis, l'API, le worker, Tesseract et le
 - [Parcours réel avec profilage : réussi en 2 min 28 s](https://github.com/Matt95354855/Harness/actions/runs/36142880989).
 - Le [rapport de validation documentaire](docs/document-validation.md) distingue cette preuve des tests historiques et des validations restantes.
 - Étape 6 : 98 tests Harness et 36 tests Python ciblés réussis ; [parcours réel avec garde-fous réussi](https://github.com/Matt95354855/Harness/actions/runs/36535694357). Détails dans le [bilan de fusion](docs/classification-fusion.md).
+- Étape 7 : 98 tests Harness et 56 tests Python ciblés réussis ; [parcours réel avec rapport d'évaluation réussi](https://github.com/Matt95354855/Harness/actions/runs/36589037305). Deux documents synthétiques correctement classés ne constituent pas une mesure de précision métier.
 
 La recette pilote directement l'adaptateur ; elle n'évalue pas le choix autonome des outils par un LLM, la précision d'un TNN entraîné ou la charge de production.
 
