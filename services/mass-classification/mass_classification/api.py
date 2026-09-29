@@ -21,6 +21,7 @@ import time
 
 from .config import settings
 from .capabilities import classification_capabilities, validate_classification_filename
+from .results import ClassificationResult, classification_result
 from .db import migrate, transaction, audit, verify_audit, tenant_embedding
 
 
@@ -124,6 +125,11 @@ def capabilities(user: Principal = Depends(principal)):
                                        approved_model_available=approved)
 
 
+@app.get("/v1/result-schema")
+def result_schema(user: Principal = Depends(principal)):
+    return ClassificationResult.model_json_schema()
+
+
 @app.get("/metrics")
 def metrics(user: Principal = Depends(require("admin"))):
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
@@ -223,7 +229,7 @@ def document(doc_id: uuid.UUID, user: Principal = Depends(principal)):
         return {"id": row["id"], "filename": row["filename"], "status": row["status"], "error": row["error"],
                 "source": row["source"], "metadata": row["metadata"], "language": row["language"],
                 "content": row["content"][:30000], "content_truncated": len(row["content"]) > 30000,
-                "analysis": analysis}
+                "analysis": analysis, "classification_result": classification_result(row, analysis)}
 
 
 @app.get("/v1/documents/{doc_id}/explanation")

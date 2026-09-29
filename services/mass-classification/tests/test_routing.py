@@ -9,7 +9,7 @@ def test_plan_selects_document_pipeline(format_, first):
     assert plan['status'] == 'planned'
     assert plan['stages'][0] == first
     assert plan['input_sha256'] == profile['sha256']
-    assert plan['classification_abstention'] == 'not_implemented'
+    assert plan['classification_abstention'] == 'no_rule_label_in_result_v1'
     assert plan == classification_plan(profile, ocr_available=True)
 
 

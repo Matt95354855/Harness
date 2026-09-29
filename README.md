@@ -6,14 +6,14 @@ Le harness orchestre les modèles, les outils, la mémoire et les traces. Mass C
 
 Le raccordement HTTP et le profilage des documents sont implémentés et testés avec les services réels. Le parcours de production accepte les **PDF et DOCX contenant du texte, des images et des tableaux**. L'OCR précède l'extraction native ; les résultats conservent leurs sources et leur profil d'entrée.
 
-Cette documentation décrit la branche de développement unifiée, pas encore fusionnée dans `main`. Le routage adaptatif, le contrat de résultat normalisé et l'abstention métier restent à construire.
+Cette documentation décrit la branche de développement unifiée, pas encore fusionnée dans `main`. Le contrat de résultat v1 et le routage déterministe sont disponibles. L'adaptation selon la qualité et l'abstention calibrée restent à construire.
 
 ## Avancement de la plateforme
 
 | Étape | État | Livraison |
 | --- | --- | --- |
 | 0 — Unification | Réalisée sur branche | Deux historiques conservés, service Python intégré, CI commune |
-| 1 — Contrat de résultat | À formaliser | Les statuts métier `classified`, `partial`, `abstained`, `failed` ne sont pas encore implémentés |
+| 1 — Contrat de résultat | Implémenté, version 1 | Statuts métier et schéma JSON : [contrat de résultat](docs/classification-result.md) |
 | 2 — Capacités | Implémentée | Route authentifiée `/v1/capabilities`, périmètre PDF/DOCX, ordre OCR puis extraction native |
 | 3 — Adaptateur | Implémentée et testée de bout en bout | Envoi multipart, suivi, analyse, preuves, feedback explicitement activable |
 | 4 — Profilage | Implémentée et testée de bout en bout | Signature, taille, SHA-256 ; structure inspectée par le worker avant OCR |

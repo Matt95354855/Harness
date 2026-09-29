@@ -32,7 +32,7 @@ Entrée
 2. Les documents bruts ne sont pas injectés inutilement dans le contexte du LLM.
 3. Une prédiction indisponible n'est jamais remplacée par une valeur inventée.
 4. Les règles, modèles, versions, preuves et limites restent distingués dans le résultat.
-5. Le feedback humain est disponible sur activation explicite. L'abstention métier normalisée reste à implémenter.
+5. Le feedback humain est disponible sur activation explicite. L'abstention v1 couvre l'absence d'étiquette par règles ; la calibration reste à réaliser.
 6. La clé Mass est conservée dans la configuration et envoyée par en-tête HTTP. Les traces peuvent contenir des paramètres, extraits et analyses sensibles : leur stockage et leur conservation doivent être configurés par l'opérateur.
 
 ## Contrat documentaire initial
@@ -43,11 +43,11 @@ La plateforme unifiée accepte uniquement les fichiers PDF et DOCX. Ils peuvent 
 2. extraction native du texte PDF, des paragraphes DOCX et des cellules de tableaux DOCX ;
 3. normalisation, segmentation, analyse et classification.
 
-La route authentifiée `GET /v1/capabilities` expose cet ordre et les limites configurées. La détection OCR vérifie la présence de l'exécutable Tesseract sur l'hôte API ; celle du TNN vérifie la présence de `approved.pt` et `approved.json`. Ces contrôles ne prouvent ni la disponibilité sur un worker distant, ni la compatibilité ou la qualité des poids. Le champ `abstention_supported` du contrat actuel ne constitue pas une implémentation de l'abstention métier : celle-ci reste à formaliser à l'étape 1. Pour les PDF, la structure exacte des cellules des tableaux n'est pas garantie.
+La route authentifiée `GET /v1/capabilities` expose cet ordre et les limites configurées. La détection OCR vérifie la présence de l'exécutable Tesseract sur l'hôte API ; celle du TNN vérifie la présence de `approved.pt` et `approved.json`. Ces contrôles ne prouvent ni la disponibilité sur un worker distant, ni la compatibilité ou la qualité des poids. Le champ `abstention_supported` du contrat actuel ne constitue pas une implémentation de l'abstention métier : son périmètre est défini par le contrat de résultat v1. Pour les PDF, la structure exacte des cellules des tableaux n'est pas garantie.
 
 ## État et travaux restants
 
-1. Définir le contrat commun de classification et ses statuts.
+1. Contrat commun v1 implémenté : [structure, statuts et limites](classification-result.md).
 2. Capacités implémentées : PDF et DOCX uniquement dans l'API de production, OCR en première étape, limites de détection précisées ci-dessus.
 3. Adaptateur HTTP implémenté et testé avec services réels : soumission, statut, analyse, preuves et feedback.
 4. Profilage déterministe implémenté : `mass_profile_document` vérifie localement la taille, la signature et l'empreinte sans transfert. Le worker analyse ensuite la structure avant OCR et conserve `metadata.input_profile` avec l'analyse.
@@ -57,7 +57,7 @@ La route authentifiée `GET /v1/capabilities` expose cet ordre et les limites co
 8. Recette de bout en bout : premier parcours synthétique réussi ; extension aux erreurs, à l'isolation inter-tenants et à la fiabilité du LLM à poursuivre.
 9. Exploitation : validation de charge, restauration et déploiement à réaliser.
 
-Les étapes 2 à 4 ont été développées avant la formalisation de l'étape 1. Les statuts de traitement actuellement consommés sont `queued`, `processing`, `ready`, `failed` ; ils ne sont pas les statuts métier de classification proposés à l'étape 1.
+Les étapes 2 à 4 ont précédé la formalisation de l'étape 1, désormais implémentée. Les statuts de traitement restent distincts des statuts du champ `classification_result`.
 
 ## Profilage v1
 
@@ -73,4 +73,4 @@ Le worker construit un plan déterministe depuis le profil validé et la présen
 
 Le plan est persisté dans `metadata.classification_plan` et un événement `classification_planned` est audité avant l'extraction. Harness peut le consulter via `mass_get_document`, y compris après un blocage OCR. `planned` signifie qu'un parcours a été sélectionné, pas que le traitement a réussi : utiliser le statut du document pour cela.
 
-Si Tesseract manque, le plan devient `blocked` et le document échoue explicitement. Aucun repli silencieux vers le seul texte natif n'est utilisé. Le blocage technique n'est pas une abstention de classification. Les poids topologiques restent conditionnels au checkpoint et au graphe ; leur présence ne garantit pas leur qualité. Le contrat métier de l'étape 1 reste un préalable à l'abstention normalisée.
+Si Tesseract manque, le plan devient `blocked` et le document échoue explicitement. Aucun repli silencieux vers le seul texte natif n'est utilisé. Le blocage technique n'est pas une abstention de classification. Les poids topologiques restent conditionnels au checkpoint et au graphe ; leur présence ne garantit pas leur qualité. Le contrat v1 formalise désormais l'abstention en absence d'étiquette par règles.

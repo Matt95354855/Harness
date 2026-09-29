@@ -1,7 +1,7 @@
 name: Mass real end-to-end
 on:
   push:
-    branches: [test/classification-end-to-end, feature/document-profiling, feature/classification-routing]
+    branches: [test/classification-end-to-end, feature/document-profiling, feature/classification-routing, feature/classification-result-contract]
   workflow_dispatch:
 permissions:
   contents: read

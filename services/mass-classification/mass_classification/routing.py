@@ -31,5 +31,5 @@ def classification_plan(profile: dict, *, ocr_available: bool) -> dict:
             'normalize_and_chunk', 'embed', 'nlp', 'rules:v1', 'evidence_graph',
         ],
         'topological_prediction': 'conditional_on_approved_compatible_weights_and_graph',
-        'classification_abstention': 'not_implemented',
+        'classification_abstention': 'no_rule_label_in_result_v1',
     }
