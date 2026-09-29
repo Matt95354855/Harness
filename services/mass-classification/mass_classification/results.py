@@ -1,6 +1,7 @@
 """Versioned business outcome, independent of the processing lifecycle."""
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
+from .fusion import FusionDecision, TAXONOMY, fuse, valid_scores
 
 
 class LabelScore(BaseModel):
@@ -30,6 +31,7 @@ class ClassificationResult(BaseModel):
     human_review_required: bool = True
     model_version: str | None = None
     neural_prediction_status: Literal['available_uncalibrated', 'unavailable'] = 'unavailable'
+    fusion: FusionDecision = Field(default_factory=FusionDecision)
 
 
 def classification_result(document: dict, analysis: dict | None) -> dict | None:
@@ -44,19 +46,27 @@ def classification_result(document: dict, analysis: dict | None) -> dict | None:
         return ClassificationResult(**(base | {'status': 'failed', 'reasons': ['missing_or_unsupported_analysis']})).model_dump()
     labels = analysis['labels']
     scores = labels.get('domain_scores', {})
+    if not valid_scores(scores) or not set(scores).issubset(TAXONOMY):
+        return ClassificationResult(**(base | {'status': 'failed', 'reasons': ['invalid_rule_scores']})).model_dump()
+    fusion = fuse(scores, analysis.get('predictions', {}))
     evidence = analysis.get('explanation', {}).get('matched_terms', {})
     truncated = bool(document.get('metadata', {}).get('embedding_truncated'))
     outcome = 'partial' if scores and truncated else 'classified' if scores else 'abstained'
     reasons = ['index_truncated'] if scores and truncated else [] if scores else ['no_rule_label']
     limitations = base['limitations'] + (['index_truncated'] if truncated else [])
-    neural = 'available_uncalibrated' if analysis.get('predictions', {}).get('classes') else 'unavailable'
+    if scores and (fusion.neural_status == 'rejected' or fusion.agreement in {'disagreement', 'ambiguous'}):
+        outcome = 'partial'
+        reasons.extend(fusion.guards)
+    limitations.extend(fusion.guards)
+    neural = 'available_uncalibrated' if fusion.neural_status == 'uncalibrated' else 'unavailable'
     if neural == 'unavailable':
-        limitations.append('neural_prediction_unavailable')
+        if 'neural_prediction_unavailable' not in limitations:
+            limitations.append('neural_prediction_unavailable')
     return ClassificationResult(**(base | {
         'status': outcome, 'reasons': reasons, 'limitations': limitations,
         'labels': [LabelScore(label=name, score=score) for name, score in sorted(scores.items())],
         'review_priority': labels.get('review_priority'),
         'evidence': [RuleEvidence(document_id=str(document['id']), label=name, matched_terms=terms)
                      for name, terms in sorted(evidence.items()) if name in scores],
-        'model_version': 'rules:v1', 'neural_prediction_status': neural,
+        'model_version': 'rules:v1', 'neural_prediction_status': neural, 'fusion': fusion,
     })).model_dump()

@@ -52,7 +52,7 @@ La route authentifiée `GET /v1/capabilities` expose cet ordre et les limites co
 3. Adaptateur HTTP implémenté et testé avec services réels : soumission, statut, analyse, preuves et feedback.
 4. Profilage déterministe implémenté : `mass_profile_document` vérifie localement la taille, la signature et l'empreinte sans transfert. Le worker analyse ensuite la structure avant OCR et conserve `metadata.input_profile` avec l'analyse.
 5. Première version du routeur déterministe livrée : parcours PDF/DOCX et blocage technique avant OCR. Adaptation à la qualité et abstention métier à poursuivre.
-6. Fusion multi-modèles et garde-fous : à réaliser après le contrat de résultat et le routage.
+6. [Fusion et garde-fous](classification-fusion.md) : politique conservatrice implémentée, contributions séparées et désaccords signalés. Pondération statistique et calibration restent conditionnées à l'évaluation sur corpus annoté.
 7. Évaluation métier : corpus annoté, calibration et mesures de qualité à constituer.
 8. Recette de bout en bout : premier parcours synthétique réussi ; extension aux erreurs, à l'isolation inter-tenants et à la fiabilité du LLM à poursuivre.
 9. Exploitation : validation de charge, restauration et déploiement à réaliser.
