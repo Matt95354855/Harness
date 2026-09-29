@@ -6,13 +6,13 @@ Le harness orchestre les modèles, les outils, la mémoire et les traces. Mass C
 
 Le raccordement HTTP et le profilage des documents sont implémentés et testés avec les services réels. Le parcours de production accepte les **PDF et DOCX contenant du texte, des images et des tableaux**. L'OCR précède l'extraction native ; les résultats conservent leurs sources et leur profil d'entrée.
 
-Cette documentation décrit la branche de développement unifiée, pas encore fusionnée dans `main`. Le contrat de résultat v1 et le routage déterministe sont disponibles. L'adaptation selon la qualité et l'abstention calibrée restent à construire.
+La plateforme unifiée est intégrée à `main`. Le contrat de résultat v1, le routage déterministe, les garde-fous et l'outillage d'évaluation sont disponibles. L'adaptation selon la qualité et l'abstention calibrée restent à construire.
 
 ## Avancement de la plateforme
 
 | Étape | État | Livraison |
 | --- | --- | --- |
-| 0 — Unification | Réalisée sur branche | Deux historiques conservés, service Python intégré, CI commune |
+| 0 — Unification | Fusionnée dans `main` | Deux historiques conservés, service Python intégré, CI commune |
 | 1 — Contrat de résultat | Implémenté, version 1 | Statuts métier et schéma JSON : [contrat de résultat](docs/classification-result.md) |
 | 2 — Capacités | Implémentée | Route authentifiée `/v1/capabilities`, périmètre PDF/DOCX, ordre OCR puis extraction native |
 | 3 — Adaptateur | Implémentée et testée de bout en bout | Envoi multipart, suivi, analyse, preuves, feedback explicitement activable |
@@ -42,7 +42,7 @@ La recette pilote directement l'adaptateur ; elle n'évalue pas le choix autonom
 | Harness | TypeScript / Node.js | Orchestration, outils, politiques d'exécution, mémoire et traçabilité |
 | Mass Classification | Python / FastAPI | Ingestion, extraction, indexation, classification et preuves |
 
-Les historiques Git des deux projets sont conservés. Le service Python reste également disponible dans son dépôt d'origine pendant la transition ; les évolutions communes devront être réalisées depuis ce monorepo une fois la branche d'intégration validée.
+Les historiques Git des deux projets sont conservés. Le service Python reste également disponible dans son dépôt d'origine ; les évolutions communes sont désormais réalisées depuis ce monorepo.
 
 ## Harness
 
@@ -94,13 +94,13 @@ Ce résultat décrit une exécution précise : **5 scénarios réussis, 1 scéna
 Prérequis : **Node.js 22.13 ou plus récent**, avec npm. La CI couvre Node.js 22 et 24.
 
 ```bash
-git clone --branch docs/unified-platform-status https://github.com/Matt95354855/Harness.git
+git clone https://github.com/Matt95354855/Harness.git
 cd Harness
 npm ci
 npm run demo
 ```
 
-La branche est précisée tant que la plateforme unifiée n'est pas fusionnée dans `main`. Cette commande démarre la démonstration Harness ; pour le traitement PDF/DOCX avec OCR, suivre le [guide documentaire](docs/document-workflow.md).
+Le dépôt utilise désormais `main` pour la plateforme unifiée. Cette commande démarre la démonstration Harness ; pour le traitement PDF/DOCX avec OCR, suivre le [guide documentaire](docs/document-workflow.md).
 
 La démonstration fait fonctionner le harness de bout en bout : décision, outil de recherche simulée et synthèse. L'installation des dépendances nécessite une connexion ; la démonstration et les tests fonctionnent ensuite sans fournisseur externe.
 
