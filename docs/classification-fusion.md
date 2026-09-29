@@ -31,4 +31,6 @@ La pondération selon la qualité OCR, les seuils métier et la fusion statistiq
 
 ## Validation
 
+Validation du 29 septembre 2026 sur le commit `73761b4` : 98 tests Harness et 36 tests Python ciblés réussis localement ; CI GitHub réussie. Le [parcours documentaire réel](https://github.com/Matt95354855/Harness/actions/runs/36535694357) a également réussi. Ces résultats attestent le fonctionnement technique, pas la précision métier.
+
 Les tests couvrent l'accord, le désaccord, les égalités, les valeurs invalides, la taxonomie incompatible, l'abstention sans règles, la troncature et l'impossibilité de contourner la politique avec un indicateur de calibration. La recette PDF/DOCX avec services réels vérifie aussi la politique, le moteur retenu et l'absence de prédiction inventée sans checkpoint. Les scénarios neuronaux restent des tests déterministes sur sorties synthétiques, pas une validation d'un TNN entraîné.
