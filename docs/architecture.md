@@ -1,5 +1,11 @@
 # Architecture
 
+## Extension documentaire
+
+Harness est raccordé au service Python dans `services/mass-classification` par `MassClassificationTools`. L'adaptateur propose le profil local, la soumission multipart, les capacités, le suivi, l'analyse, la recherche de preuves et le feedback activable explicitement. La file persistante appartient au service Python ; annuler une attente ne supprime pas une tâche déjà soumise.
+
+Le worker profile la structure avant OCR. Le routage adaptatif et le contrat normalisé de résultat restent à développer. Voir le [guide unifié](unified-platform.md) et la [validation documentaire](document-validation.md).
+
 ## Responsabilités
 
 Harness est une bibliothèque TypeScript et une interface en ligne de commande. Son moteur coordonne un modèle, des outils et la mémoire d'une session. L'inférence reste la responsabilité du fournisseur de modèle.

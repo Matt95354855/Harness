@@ -4,16 +4,16 @@
 
 Réunir le Harness et Mass Classification dans un monorepo sans confondre leurs responsabilités. Le Harness décide quelles capacités autorisées utiliser et contrôle leur exécution. Mass Classification reste l'autorité pour l'ingestion, l'extraction, l'analyse et la provenance des résultats.
 
-## État de l'étape 0
+## Fondation livrée à l'étape 0
 
 - le travail existant reste intact sur ses branches d'origine ;
 - Mass Classification est stabilisé sur `integration/prepare-unified-platform` ;
 - son historique est rattaché à celui du Harness ;
 - son code est importé sous `services/mass-classification` ;
 - la CI du monorepo vérifie séparément les composants TypeScript et Python ;
-- aucun contrat réseau ou comportement de classification n'est modifié à ce stade.
+- cette étape initiale ne modifiait pas le comportement métier ; les étapes 2 à 4 ont ensuite ajouté les capacités, l'adaptateur et le profilage.
 
-## Architecture cible
+## Architecture cible (partiellement implémentée)
 
 ```text
 Entrée
@@ -32,8 +32,8 @@ Entrée
 2. Les documents bruts ne sont pas injectés inutilement dans le contexte du LLM.
 3. Une prédiction indisponible n'est jamais remplacée par une valeur inventée.
 4. Les règles, modèles, versions, preuves et limites restent distingués dans le résultat.
-5. Les décisions sensibles conservent une revue humaine et une possibilité d'abstention.
-6. Les secrets, clés API et contenus sensibles ne sont pas écrits dans les traces.
+5. Le feedback humain est disponible sur activation explicite. L'abstention métier normalisée reste à implémenter.
+6. La clé Mass est conservée dans la configuration et envoyée par en-tête HTTP. Les traces peuvent contenir des paramètres, extraits et analyses sensibles : leur stockage et leur conservation doivent être configurés par l'opérateur.
 
 ## Contrat documentaire initial
 
@@ -43,16 +43,21 @@ La plateforme unifiée accepte uniquement les fichiers PDF et DOCX. Ils peuvent 
 2. extraction native du texte PDF, des paragraphes DOCX et des cellules de tableaux DOCX ;
 3. normalisation, segmentation, analyse et classification.
 
-La route authentifiée `GET /v1/capabilities` expose cet ordre, les limites actives, la disponibilité de Tesseract et celle d'un éventuel checkpoint approuvé. Pour les PDF, les tableaux sont d'abord restitués comme texte OCR ; la structure exacte des cellules n'est pas garantie à ce stade.
+La route authentifiée `GET /v1/capabilities` expose cet ordre et les limites configurées. La détection OCR vérifie la présence de l'exécutable Tesseract sur l'hôte API ; celle du TNN vérifie la présence de `approved.pt` et `approved.json`. Ces contrôles ne prouvent ni la disponibilité sur un worker distant, ni la compatibilité ou la qualité des poids. Le champ `abstention_supported` du contrat actuel ne constitue pas une implémentation de l'abstention métier : celle-ci reste à formaliser à l'étape 1. Pour les PDF, la structure exacte des cellules des tableaux n'est pas garantie.
 
-## Prochaines étapes
+## État et travaux restants
 
 1. Définir le contrat commun de classification et ses statuts.
-2. Exposer les capacités réellement disponibles dans Mass Classification. **En cours : PDF et DOCX uniquement, OCR en première étape.**
-3. Créer l'adaptateur HTTP asynchrone dans Harness. **En cours : soumission, statut, preuves et feedback.**
+2. Capacités implémentées : PDF et DOCX uniquement dans l'API de production, OCR en première étape, limites de détection précisées ci-dessus.
+3. Adaptateur HTTP implémenté et testé avec services réels : soumission, statut, analyse, preuves et feedback.
 4. Profilage déterministe implémenté : `mass_profile_document` vérifie localement la taille, la signature et l'empreinte sans transfert. Le worker analyse ensuite la structure avant OCR et conserve `metadata.input_profile` avec l'analyse.
 5. Construire le routeur adaptatif et ses règles d'abstention.
-6. Ajouter les tests de bout en bout sur données synthétiques.
+6. Fusion multi-modèles et garde-fous : à réaliser après le contrat de résultat et le routage.
+7. Évaluation métier : corpus annoté, calibration et mesures de qualité à constituer.
+8. Recette de bout en bout : premier parcours synthétique réussi ; extension aux erreurs, à l'isolation inter-tenants et à la fiabilité du LLM à poursuivre.
+9. Exploitation : validation de charge, restauration et déploiement à réaliser.
+
+Les étapes 2 à 4 ont été développées avant la formalisation de l'étape 1. Les statuts de traitement actuellement consommés sont `queued`, `processing`, `ready`, `failed` ; ils ne sont pas les statuts métier de classification proposés à l'étape 1.
 
 ## Profilage v1
 
