@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import tempfile
 import uuid
+import shutil
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +20,7 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 import time
 
 from .config import settings
+from .capabilities import classification_capabilities, validate_classification_filename
 from .db import migrate, transaction, audit, verify_audit, tenant_embedding
 
 
@@ -111,6 +113,17 @@ def session(user: Principal = Depends(principal)):
     return {"mode": "production", "tenant": user.tenant, "role": user.role}
 
 
+@app.get("/v1/capabilities")
+def capabilities(user: Principal = Depends(principal)):
+    """Return the installed contract used by the Harness before planning a run."""
+    cfg = settings()
+    checkpoint = cfg.model_dir / "approved.pt"
+    approved = checkpoint.is_file() and checkpoint.with_suffix(".json").is_file()
+    return classification_capabilities(max_upload_bytes=cfg.max_upload_bytes,
+                                       ocr_available=shutil.which("tesseract") is not None,
+                                       approved_model_available=approved)
+
+
 @app.get("/metrics")
 def metrics(user: Principal = Depends(require("admin"))):
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
@@ -137,7 +150,10 @@ def upload(file: UploadFile = File(...), source_json: str = Form("{}"), user: Pr
             raise ValueError()
     except (ValueError, TypeError):
         raise HTTPException(422, "source_json must be a small JSON object")
-    name = Path(file.filename or "unnamed").name[:200]
+    try:
+        name = validate_classification_filename(file.filename or "unnamed")
+    except ValueError as exc:
+        raise HTTPException(415, str(exc)) from exc
     cfg = settings()
     digest = hashlib.sha256()
     size = 0
