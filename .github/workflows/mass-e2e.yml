@@ -1,0 +1,65 @@
+name: Mass real end-to-end
+on:
+  push:
+    branches: [test/classification-end-to-end]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: mass
+          POSTGRES_USER: mass
+          POSTGRES_PASSWORD: synthetic-ci-only
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    env:
+      DATABASE_URL: postgresql://mass:synthetic-ci-only@127.0.0.1:5432/mass
+      REDIS_URL: redis://127.0.0.1:6379/0
+      DATA_DIR: /tmp/mass-e2e-data
+      MODEL_DIR: /tmp/mass-e2e-models
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm ci
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y tesseract-ocr fonts-dejavu-core
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e './services/mass-classification[test]'
+          python -m spacy download xx_ent_wiki_sm
+          python scripts/mass-fixtures.py
+      - name: Run actual API, worker and Harness adapter
+        shell: bash
+        run: |
+          set -euo pipefail
+          key=$(python -m mass_classification.admin create-key --tenant e2e --role admin | sed -n 's/^token=//p')
+          echo "::add-mask::$key"
+          export MASS_CLASSIFICATION_API_KEY="$key"
+          python -m uvicorn mass_classification.api:app --host 127.0.0.1 --port 8000 > /tmp/mass-api.log 2>&1 &
+          api_pid=$!
+          python -m mass_classification.worker > /tmp/mass-worker.log 2>&1 &
+          worker_pid=$!
+          trap 'kill "$api_pid" "$worker_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:8000/health/ready; then break; fi
+            sleep 1
+          done
+          npx tsx scripts/mass-e2e.ts
+      - name: Diagnostic logs on failure (synthetic data only)
+        if: failure()
+        run: |
+          tail -100 /tmp/mass-api.log /tmp/mass-worker.log || true
