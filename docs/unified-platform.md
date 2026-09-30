@@ -54,8 +54,9 @@ La route authentifiée `GET /v1/capabilities` expose cet ordre et les limites co
 5. Première version du routeur déterministe livrée : parcours PDF/DOCX et blocage technique avant OCR. Adaptation à la qualité et abstention métier à poursuivre.
 6. [Fusion et garde-fous](classification-fusion.md) : politique conservatrice implémentée, contributions séparées et désaccords signalés. Pondération statistique et calibration restent conditionnées à l'évaluation sur corpus annoté.
 7. [Évaluation métier](classification-evaluation.md) : évaluateur hors ligne implémenté (métriques, abstention, partitions et diagnostics neuronaux). Corpus représentatif, calibration effective et seuils d'acceptation restent à constituer ; les données synthétiques ne prouvent aucune précision métier.
-8. Recette de bout en bout : premier parcours synthétique réussi ; extension aux erreurs, à l'isolation inter-tenants et à la fiabilité du LLM à poursuivre.
-9. Exploitation : validation de charge, restauration et déploiement à réaliser.
+8. [Préparation du corpus](corpus-preparation.md) : inventaire privé, annotations explicites et export du manifeste implémentés ; tests écrits mais exécution différée. Aucun corpus réel ni calibration n'est livré.
+9. Recette de bout en bout : premier parcours synthétique réussi ; extension aux erreurs, à l'isolation inter-tenants et à la fiabilité du LLM à poursuivre.
+10. Exploitation : validation de charge, restauration et déploiement à réaliser.
 
 Les étapes 2 à 4 ont précédé la formalisation de l'étape 1, désormais implémentée. Les statuts de traitement restent distincts des statuts du champ `classification_result`.
 

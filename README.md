@@ -20,6 +20,13 @@ La plateforme unifiée est intégrée à `main`. Le contrat de résultat v1, le 
 | 5 — Routage | Première version déterministe | Plan PDF ou DOCX persisté avant OCR ; blocage si OCR indisponible ; adaptation avancée à poursuivre |
 | 6 — Fusion et garde-fous | Politique conservatrice implémentée | Contributions séparées, désaccords, rejet des scores invalides et revue humaine ; [limites de calibration](docs/classification-fusion.md) |
 | 7 — Évaluation métier | Outillage implémenté, corpus métier requis | Rapports reproductibles, précision/rappel/F1, abstention, contrôles de partitions et diagnostics neuronaux ; [guide d'évaluation](docs/classification-evaluation.md) |
+| 8 — Préparation du corpus | Implémentation proposée, tests différés | Inventaire PDF/DOCX, annotation humaine explicite et export compatible avec l'évaluateur ; [protocole](docs/corpus-preparation.md) |
+
+L'étape 8 se prépare sans ressources d'inférence et ne change pas la fusion ni
+le routage de production. Ses tests sont écrits mais non exécutés à ce stade,
+à la demande de l'opérateur. Les validations historiques ci-dessous ne couvrent
+pas cette nouvelle livraison. Le corpus réel, l'entraînement et la calibration
+restent à réaliser.
 
 Le [guide de la plateforme](docs/unified-platform.md) détaille les comportements et limites. Le [guide de démarrage documentaire](docs/document-workflow.md) fournit la configuration et un exemple exécutable.
 

@@ -8,6 +8,11 @@ L'outillage est implémenté et testé. **L'évaluation métier réelle reste à
 
 ## Utilisation
 
+Pour constituer le manifeste sans lancer d'inférence, suivre la
+[préparation du corpus de l'étape 8](corpus-preparation.md). Cet outil ne remplace
+ni l'annotation indépendante ni l'exécution ultérieure du pipeline. Sa recette
+est différée ; les résultats historiques de l'étape 7 ne le valident pas.
+
 Depuis `services/mass-classification`, avec les dépendances du service installées :
 
 ```bash
