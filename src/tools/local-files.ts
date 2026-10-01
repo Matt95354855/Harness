@@ -4,6 +4,21 @@ import type { JsonValue, Tool } from '../core/types.js';
 
 const MAX_FILE_BYTES = 1_000_000;
 const MAX_ENTRIES = 200;
+const PROTECTED_NAMES = new Set([
+  '.git', '.harness', '.venv', 'node_modules',
+  'encryption.key', 'chat.sqlite', 'credentials.json', 'secrets.json',
+]);
+const PROTECTED_EXTENSIONS = new Set(['.pem', '.key', '.pfx', '.p12']);
+
+function protectedPath(path: string): boolean {
+  return path.split(/[\\/]/u).some(part => {
+    const name = part.toLocaleLowerCase();
+    return PROTECTED_NAMES.has(name)
+      || name === '.env'
+      || name.startsWith('.env.')
+      || [...PROTECTED_EXTENSIONS].some(extension => name.endsWith(extension));
+  });
+}
 
 function inside(path: string, root: string): boolean {
   const rel = relative(root, path);
@@ -22,7 +37,9 @@ export class LocalFileTools {
     if (typeof input !== 'string' || !input.trim() || input.includes('\0')) throw new Error('path must be a non-empty string');
     const requested = resolve(input);
     const canonical = await realpath(requested);
-    if (!this.roots.some(root => inside(canonical, root))) throw new Error('Path is outside LOCAL_FILE_ROOTS');
+    const root = this.roots.find(candidate => inside(canonical, candidate));
+    if (!root) throw new Error('Path is outside LOCAL_FILE_ROOTS');
+    if (protectedPath(relative(root, canonical))) throw new Error('Path is protected and cannot be accessed');
     return canonical;
   }
 
@@ -34,7 +51,7 @@ export class LocalFileTools {
         execute: async ({ path }) => {
           const directory = await this.allowed(path);
           if (!(await stat(directory)).isDirectory()) throw new Error('Path is not a directory');
-          const entries = await readdir(directory, { withFileTypes: true });
+          const entries = (await readdir(directory, { withFileTypes: true })).filter(item => !protectedPath(item.name));
           return { path: directory, entries: entries.slice(0, MAX_ENTRIES).map(item => ({ name: item.name, type: item.isDirectory() ? 'directory' : item.isFile() ? 'file' : 'other' })), truncated: entries.length > MAX_ENTRIES };
         },
       },
@@ -62,6 +79,7 @@ export class LocalFileTools {
           const walk = async (current: string): Promise<void> => {
             for (const item of await readdir(current, { withFileTypes: true })) {
               context.signal.throwIfAborted(); if (visited++ >= 500 || matches.length >= 50) return;
+              if (protectedPath(item.name)) continue;
               const candidate = resolve(current, item.name);
               if (item.isDirectory()) await walk(candidate);
               else if (item.isFile()) {

@@ -1,0 +1,37 @@
+/* Quiet, compact interface: the conversation is the main content. */
+:root { background: #202020; color: #ececec; --accent: #dedede; --muted: #aaa; --line: #393939; }
+.auth-shell { display: flex; align-items: center; justify-content: center; }
+.auth-panel { width: 100%; padding: 32px 24px; }
+.auth-card h2 { font-size: 25px; letter-spacing: 0; margin: 0 0 24px; }
+label { color: #ccc; }
+input, textarea { background: #292929; border-color: #444; }
+.primary { justify-content: center; background: #e5e5e5; color: #171717; }
+.secondary { background: #292929; border-color: #444; }
+.secondary:hover, .icon-button:hover { background: #383838; }
+.workspace { grid-template-columns: 240px 1fr; }
+aside { background: #181818; border-color: #333; }
+aside .brand { font-size: 19px; font-weight: 600; letter-spacing: 0; margin: 8px 10px 24px; }
+.new-chat { background: #292929; border-color: #444; color: #ececec; }
+#chat-list button { color: #bbb; }
+#chat-list button.active, #chat-list button:hover { background: #303030; color: #fff; }
+.account { color: #ccc; }
+header { height: 64px; }
+.model-picker select { color: #eee; font-size: 14px; }
+.model-picker option { background: #292929; }
+.welcome { margin: clamp(40px, 20vh, 200px) auto 24px; animation: none; }
+.welcome h1 { font-size: 25px; letter-spacing: 0; font-weight: 450; margin: 0; color: #bbb; }
+.composer-wrap { padding-bottom: 24px; }
+.composer { background: #292929; border-color: #454545; box-shadow: none; border-radius: 14px; }
+.composer textarea::placeholder { color: #999; }
+.send { background: #e5e5e5; color: #181818; }
+.run-status { color: #aaa; }
+.run-status:empty, .error:empty { display: none; }
+.message.user { background: #333; }
+.message .message-label { color: #aaa; letter-spacing: 0; }
+.message code { background: #181818; }
+.notes-panel, dialog { background: #262626; border-color: #444; }
+@media (max-width: 620px) {
+  .workspace { grid-template-columns: 1fr; }
+  aside { width: 250px; }
+  .welcome h1 { font-size: 23px; }
+}

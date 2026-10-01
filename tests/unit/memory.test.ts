@@ -7,6 +7,11 @@ import type { ConversationTurn, Decision, ExecutionTrace, Fact, ToolCall } from 
 import { ConversationMemory } from '../../src/memory/conversation.js';
 import { DecisionLog, writeTrace } from '../../src/memory/decision-log.js';
 
+function assertPrivateMode(mode: number): void {
+  // Windows does not expose POSIX permission bits through fs.stat().
+  if (process.platform !== 'win32') assert.equal(mode & 0o777, 0o600);
+}
+
 const timestamp = '2026-01-01T12:00:00.000Z';
 const fact = (statement: string, confidence = 0.5): Fact => ({ statement, confidence, source: 'test', addedAt: timestamp });
 const turn = (index: number): ConversationTurn => ({ userInput: `question ${index}`, actionSummaries: ['Search docs'], toolsUsed: [], agentResponse: `answer ${index}`, timestamp, iterationNumber: index });
@@ -108,7 +113,7 @@ test('disk persistence round-trips JSON, creates parents, and uses private permi
   const restored = new ConversationMemory({ persistencePath });
   await restored.loadFromDisk();
   assert.deepEqual(restored.snapshot(), original.snapshot());
-  assert.equal((await stat(persistencePath)).mode & 0o777, 0o600);
+  assertPrivateMode((await stat(persistencePath)).mode);
   assert.deepEqual(await readdir(join(root, 'nested')), ['memory.json']);
 });
 
@@ -162,7 +167,7 @@ test('trace writer uses safe identifiers, atomic private files, and explicit I/O
   const path = await writeTrace(trace(), root);
   assert.equal(path, join(root, 'session-1-run-1.json'));
   assert.deepEqual(JSON.parse(await readFile(path, 'utf8')), trace());
-  assert.equal((await stat(path)).mode & 0o777, 0o600);
+  assertPrivateMode((await stat(path)).mode);
   assert.equal(await new DecisionLog(root).write(trace()), path);
   await assert.rejects(writeTrace({ ...trace(), runId: '../escape' }, root), /safe identifiers/);
   await assert.rejects(writeTrace(trace(), path));

@@ -10,6 +10,7 @@ import { ToolRegistry } from '../../src/tools/tool-registry.js';
 import { WebFetchTool } from '../../src/tools/web-fetch.js';
 import { McpConnections } from '../../src/tools/mcp-client.js';
 import { createConfiguredToolRuntime } from '../../src/tools/configured-runtime.js';
+import { createWebToolRuntime } from '../../src/web/tools.js';
 
 function executor(tools: ReturnType<LocalFileTools['tools']> | ReturnType<GoogleDriveTools['tools']> | WebFetchTool[]): ToolExecutor {
   const registry = new ToolRegistry(); for (const tool of tools) registry.register(tool); return new ToolExecutor(registry);
@@ -19,11 +20,39 @@ test('local file tools read, list and search only inside authorized roots', asyn
   const root = await mkdtemp(join(tmpdir(), 'harness-files-')); const outside = await mkdtemp(join(tmpdir(), 'harness-outside-'));
   t.after(async () => { const { rm } = await import('node:fs/promises'); await Promise.all([rm(root, { recursive: true }), rm(outside, { recursive: true })]); });
   await mkdir(join(root, 'docs')); await writeFile(join(root, 'docs', 'note.txt'), 'Bonjour Harness\nMCP prêt');
-  await writeFile(join(outside, 'secret.txt'), 'secret'); await symlink(join(outside, 'secret.txt'), join(root, 'escape.txt'));
+  await writeFile(join(outside, 'secret.txt'), 'secret');
+  let symlinkAvailable = true;
+  try { await symlink(join(outside, 'secret.txt'), join(root, 'escape.txt')); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'EPERM') symlinkAvailable = false; else throw error; }
   const run = executor((await LocalFileTools.create([root])).tools());
   assert.equal((await run.execute('local_read', { path: join(root, 'docs', 'note.txt') })).status, 'completed');
   assert.match(JSON.stringify((await run.execute('local_search', { path: root, query: 'MCP' })).result?.data), /note\.txt/u);
-  assert.match((await run.execute('local_read', { path: join(root, 'escape.txt') })).error!, /outside/u);
+  if (symlinkAvailable) assert.match((await run.execute('local_read', { path: join(root, 'escape.txt') })).error!, /outside/u);
+});
+
+test('local file tools hide Harness secrets even inside an authorized root', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'harness-protected-'));
+  t.after(async () => { const { rm } = await import('node:fs/promises'); await rm(root, { recursive: true }); });
+  await writeFile(join(root, 'public.txt'), 'visible');
+  await writeFile(join(root, '.env'), 'SECRET=hidden');
+  await mkdir(join(root, '.harness'));
+  await writeFile(join(root, '.harness', 'encryption.key'), 'hidden');
+  const run = executor((await LocalFileTools.create([root])).tools());
+  const listing = await run.execute('local_list', { path: root });
+  assert.match(JSON.stringify(listing.result?.data), /public\.txt/u);
+  assert.doesNotMatch(JSON.stringify(listing.result?.data), /\.env|\.harness/u);
+  assert.match((await run.execute('local_read', { path: join(root, '.env') })).error!, /protected/u);
+});
+
+test('Web chat exposes every locally available Harness tool despite a restrictive CLI allowlist', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'harness-web-tools-'));
+  t.after(async () => { const { rm } = await import('node:fs/promises'); await rm(root, { recursive: true }); });
+  const runtime = await createWebToolRuntime(root, { PERSIST_TRACES: 'false', ALLOWED_TOOLS: 'calculate' });
+  t.after(() => runtime.close());
+  assert.deepEqual(runtime.registry.listAll().map(tool => tool.name), [
+    'calculate', 'web_fetch', 'local_list', 'local_read', 'local_search', 'web_search',
+  ]);
+  assert.deepEqual(runtime.unavailable.map(item => item.family), ['mass-classification', 'google-drive', 'mcp']);
 });
 
 test('web fetch rejects loopback and credential-bearing URLs before requesting them', async () => {

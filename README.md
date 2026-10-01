@@ -1,5 +1,16 @@
 # Classcale Unified Platform
 
+![CI](https://github.com/Matt95354855/Harness/actions/workflows/ci.yml/badge.svg)
+![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A5%2022.13-417E38)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6)
+![Local inference](https://img.shields.io/badge/inference-local%20%2F%20OpenAI--compatible-6f42c1)
+
+> **Campagne locale du 1 octobre 2026 :** GPT-OSS 20B MXFP4 atteint 82,76 % d’accuracy et 66,85 % de Macro-F1 sur 20 pages DocLayNet ; Qwen 3.6 27B Instruct Q4_K_M atteint 78,82 % et 56,48 %. Voir le [rapport complet](docs/doclaynet-benchmark-2026-10-01.md).
+
+Le Harness est le moteur TypeScript qui orchestre les modèles de langage, les outils et les services de classification documentaire. Il fournit une boucle d’agent contrôlée, des connecteurs MCP, des traces structurées, une interface web locale et un banc d’évaluation reproductible pour DocLayNet.
+
+Les modèles locaux sont servis via `llama.cpp` au format OpenAI-compatible. Les outils sont explicitement autorisés, bornés et observables ; aucune connexion externe n’est activée par défaut.
+
 **Une plateforme unifiée qui réunit un harness d'agents IA TypeScript et le service Python Mass Classification dans un même dépôt.**
 
 Le harness orchestre les modèles, les outils, la mémoire et les traces. Mass Classification, conservé dans [`services/mass-classification`](services/mass-classification), fournit l'ingestion documentaire, l'extraction multimodale, la classification explicable, la recherche, le graphe et les modèles topologiques conditionnés à des poids approuvés.
@@ -126,7 +137,7 @@ GITHUB_TOKEN="$(gh auth token)" npm run acceptance
 
 Le mode `mock` suit des scénarios déterministes. Il permet de vérifier l'orchestration ; il ne mesure pas l'intelligence d'un modèle et ne répond pas librement à toutes les questions.
 
-### Modèle local recommandé sur Mac Intel sans GPU
+### Modèle local historique — validation Mac Intel
 
 La configuration testée utilise **Qwen3.5 0.8B Q8_0** avec `llama.cpp`. Le modèle occupe environ 795 Mo sur disque et fonctionne entièrement sur CPU.
 
@@ -144,6 +155,26 @@ npm run dev -- run "Calcule (12 + 8) * 3 avec l'outil calculate."
 ```
 
 Le [guide du modèle local](docs/local-model.md) donne l'installation exacte, la configuration et les commandes de validation.
+
+### Campagne actuelle Windows — GPT-OSS et Qwen
+
+La campagne DocLayNet actuelle utilise Windows 11, un CPU AMD EPYC 9354 exposé avec 4 cœurs/8 threads, une NVIDIA RTX 2000 Ada Generation avec environ 4 Go dédiés exposés et 16 Go de RAM visibles. Les fichiers GGUF sont stockés localement :
+
+```text
+C:\Users\Shadow\Models\gguf\gpt-oss-20b-mxfp4\gpt-oss-20b-MXFP4.gguf
+C:\Users\Shadow\Models\gguf\qwen3.6-27b-instruct-q4_k_m\qwen3.6-27b-instruct-Q4_K_M.gguf
+```
+
+Les modèles sont textuels : l’adaptateur envoie le texte extrait et la géométrie normalisée des objets, mais pas les pixels PNG. Ce résultat ne doit donc pas être présenté comme un benchmark vision multimodal.
+
+Depuis PowerShell, utiliser `npm.cmd` si la stratégie d’exécution bloque `npm.ps1` :
+
+```powershell
+Set-Location "C:\Users\Shadow\Documents\ChatGPT\classcale on windows\harness"
+npm.cmd run local:llm:qwen
+```
+
+Les commandes stables, les paramètres de reprise et l’analyse des erreurs sont documentés dans [`docs/doclaynet-adapter.md`](docs/doclaynet-adapter.md) et [`docs/doclaynet-benchmark-2026-10-01.md`](docs/doclaynet-benchmark-2026-10-01.md).
 
 ## Ce que le projet fournit
 
@@ -308,6 +339,8 @@ Les correspondances, corrections et critères des **14 phases** sont détaillés
 - [Brancher un modèle local](docs/local-model.md)
 - [Suivi des 14 phases](docs/implementation-status.md)
 - [Rapport de validation initiale](docs/validation.md)
+- [Adaptateur DocLayNet](docs/doclaynet-adapter.md)
+- [Rapport DocLayNet du 1 octobre 2026](docs/doclaynet-benchmark-2026-10-01.md)
 - [Contribuer](CONTRIBUTING.md)
 - [Sécurité et traitement des données](SECURITY.md)
 

@@ -1,5 +1,28 @@
 # Utiliser le modèle local
 
+## Windows : choisir GPT-OSS ou Qwen3.6
+
+Les deux modèles installés dans `C:\Users\Shadow\Models\gguf` sont exposés par llama.cpp avec le même identifiant `harness-local`. Il suffit donc de choisir le serveur à démarrer :
+
+```powershell
+npm run local:llm:gpt-oss
+```
+
+ou :
+
+```powershell
+npm run local:llm:qwen
+```
+
+Dans un second terminal, depuis le dépôt Harness :
+
+```powershell
+npm run doctor
+npm run dev -- run "Calcule (12 + 8) * 3 avec l'outil calculate."
+```
+
+Le profil GPT-OSS utilise toutes les couches GPU disponibles et désactive le raisonnement natif Harmony afin de laisser le JSON d'action être traité par le Harness. Le profil Qwen utilise l'ajustement automatique GPU/RAM et un contexte initial de 2 048 jetons, adapté aux 15 Go de VRAM et 16 Go de RAM de cette machine. Les deux serveurs écoutent sur `http://127.0.0.1:8080/v1` et ne doivent pas être démarrés simultanément.
+
 La configuration de référence utilise **Qwen3.5 0.8B Q8_0** avec `llama.cpp`. Elle a été validée sur un Mac Intel Core i7 avec 16 Go de mémoire, sans GPU : le modèle appelle réellement le calculateur du harness et obtient `60` pour `(12 + 8) * 3`.
 
 Le fichier du modèle reste dans `models/`, qui est ignoré par Git. Il n'est donc jamais envoyé sur GitHub.

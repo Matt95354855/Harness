@@ -5,6 +5,11 @@ import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { Logger } from '../../src/utils/logger.js';
 
+function assertPrivateMode(mode: number): void {
+  // Windows does not expose POSIX permission bits through fs.stat().
+  if (process.platform !== 'win32') assert.equal(mode & 0o777, 0o600);
+}
+
 async function directory(t: TestContext): Promise<string> {
   const path = await mkdtemp(join(tmpdir(), 'harness-logger-'));
   t.after(() => rm(path, { recursive: true, force: true }));
@@ -66,7 +71,7 @@ test('file logger creates private JSONL and rotates into one bounded backup', as
   for (const path of [filePath, `${filePath}.1`]) {
     const metadata = await stat(path);
     assert.ok(metadata.size <= 350);
-    assert.equal(metadata.mode & 0o777, 0o600);
+    assertPrivateMode(metadata.mode);
     const content = await readFile(path, 'utf8');
     assert.equal(content.includes('must-not-leak'), false);
     for (const line of content.trim().split('\n')) assert.equal((JSON.parse(line) as { component: string }).component, 'worker');

@@ -122,7 +122,15 @@ export class Agent {
           continue;
         }
         if (calls.length >= this.config.maxToolCalls) { this.event('limit', { reason: 'maxToolCalls' }); break; }
-        const call = await this.executor.execute(decision.nextAction === 'SEARCH' ? 'web_search' : decision.toolName!, decision.nextAction === 'SEARCH' ? { query: decision.query!, maxResults: 5 } : decision.parameters!, { signal, sessionId: this.sessionId });
+        const requestedTool = decision.nextAction === 'SEARCH' ? 'web_search' : decision.toolName!;
+        const requestedParameters = decision.nextAction === 'SEARCH' ? { query: decision.query!, maxResults: 5 } : decision.parameters!;
+        const duplicate = calls.find(call => call.status === 'completed' && call.toolName === requestedTool && JSON.stringify(call.parameters) === JSON.stringify(requestedParameters));
+        if (duplicate) {
+          this.event('tool.skipped_duplicate', { toolName: requestedTool, originalCallId: duplicate.id });
+          limited = false;
+          break;
+        }
+        const call = await this.executor.execute(requestedTool, requestedParameters, { signal, sessionId: this.sessionId });
         calls.push(call); this.state.toolCalls = calls; this.trace.toolCalls = calls;
         this.memory.recordToolCall(call);
         this.event('tool.completed', { id: call.id, toolName: call.toolName, status: call.status, error: call.error });

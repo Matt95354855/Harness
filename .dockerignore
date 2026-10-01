@@ -1,0 +1,16 @@
+.git
+.github
+.harness
+.env
+.env.*
+!.env.example
+coverage
+dist
+models
+node_modules
+tests
+examples
+scripts
+services
+*.log
+*.tmp

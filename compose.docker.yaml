@@ -1,0 +1,40 @@
+name: harness-bot-local
+
+services:
+  bot:
+    image: harness-bot:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    gpus: all
+    ports:
+      - "127.0.0.1:3082:3082"
+    environment:
+      HARNESS_WEB_DATA: /data
+      HARNESS_WEB_BIND: 0.0.0.0
+      HARNESS_MODEL_ROOT: /models
+      HARNESS_LLAMA_SERVER: /app/llama-server
+      LOCAL_FILE_ROOTS: /workspace
+      MCP_CONFIG_PATH: /config/mcp.json
+      MASS_CLASSIFICATION_URL: ${DOCKER_MASS_CLASSIFICATION_URL:-}
+      MASS_CLASSIFICATION_API_KEY: ${MASS_CLASSIFICATION_API_KEY:-}
+      MASS_INPUT_ROOTS: /workspace
+      GOOGLE_DRIVE_ACCESS_TOKEN: ${GOOGLE_DRIVE_ACCESS_TOKEN:-}
+    volumes:
+      - type: bind
+        source: ./.harness/web
+        target: /data
+      - type: bind
+        source: C:/Users/Shadow/Models/gguf
+        target: /models
+        read_only: true
+      - type: bind
+        source: ..
+        target: /workspace
+        read_only: true
+      - type: bind
+        source: ./config
+        target: /config
+        read_only: true
+    stop_grace_period: 30s

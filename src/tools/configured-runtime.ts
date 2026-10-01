@@ -9,8 +9,9 @@ import { McpConnections } from './mcp-client.js';
 import { MassClassificationTools } from './mass-classification.js';
 
 export interface ConfiguredToolRuntime { registry: ToolRegistry; capabilities: string[]; close(): Promise<void> }
+export interface ConfiguredToolRuntimeOptions { enableMassFeedback?: boolean }
 
-export async function createConfiguredToolRuntime(env: NodeJS.ProcessEnv = process.env): Promise<ConfiguredToolRuntime> {
+export async function createConfiguredToolRuntime(env: NodeJS.ProcessEnv = process.env, options: ConfiguredToolRuntimeOptions = {}): Promise<ConfiguredToolRuntime> {
   const config = loadConfig(env);
   const allowed = config.agent.allowedTools;
   const enabled = (...names: string[]): boolean => !allowed || names.some(name => allowed.includes(name));
@@ -26,7 +27,7 @@ export async function createConfiguredToolRuntime(env: NodeJS.ProcessEnv = proce
   if (massUrl && massKey && enabledPrefix('mass_')) {
     const massRoots = env.MASS_INPUT_ROOTS?.split(',').map(value => value.trim()).filter(Boolean) ?? [];
     const maxUpload = env.MASS_MAX_UPLOAD_BYTES === undefined ? undefined : Number(env.MASS_MAX_UPLOAD_BYTES);
-    const mass = await MassClassificationTools.create({ endpoint: massUrl, apiKey: massKey, inputRoots: enabled('mass_submit_document', 'mass_profile_document') ? massRoots : [], maxUploadBytes: maxUpload, enableFeedback: allowed?.includes('mass_submit_feedback') ?? false });
+    const mass = await MassClassificationTools.create({ endpoint: massUrl, apiKey: massKey, inputRoots: enabled('mass_submit_document', 'mass_profile_document') ? massRoots : [], maxUploadBytes: maxUpload, enableFeedback: options.enableMassFeedback ?? (allowed?.includes('mass_submit_feedback') ?? false) });
     const selected = mass.tools().filter(tool => enabled(tool.name)); for (const tool of selected) registry.register(tool);
     if (selected.length) capabilities.push('mass-classification');
   }
