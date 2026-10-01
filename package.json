@@ -46,7 +46,8 @@
     "example:multi-hop": "tsx examples/multi-hop-reasoning.ts",
     "benchmark": "tsx scripts/benchmark.ts",
     "acceptance": "tsx scripts/acceptance.ts",
-    "doclaynet:eval": "tsx scripts/doclaynet-adapter.ts"
+    "doclaynet:eval": "tsx scripts/doclaynet-adapter.ts",
+    "doclaynet:sample": "tsx scripts/doclaynet-adapter.ts --split test --sample 500 --seed 20261001 --max-objects 12 --objects-per-request 4 --max-tokens 1400 --attempts 4 --request-timeout-ms 180000 --health-wait-ms 30000 --retry-delay-ms 2000 --endpoint http://127.0.0.1:8080/v1 --model harness-local --output .harness/doclaynet/gpt-oss-random-500.json --resume"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.1",
