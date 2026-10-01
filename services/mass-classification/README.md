@@ -27,6 +27,13 @@ L'étape 6 ajoute une [politique de fusion conservatrice](../../docs/classificat
 
 L'étape 7 ajoute un [évaluateur hors ligne](../../docs/classification-evaluation.md), disponible via `python -m mass_classification.evaluation` ou `mass-evaluate`. Il compare des sorties API figées à un manifeste annoté, contrôle les partitions et les empreintes, puis calcule précision, rappel, F1, abstention et diagnostics neuronaux éligibles. Il n'approuve aucun modèle et ne remplace pas la constitution d'un corpus métier indépendant.
 
+L'étape 8 ajoute `python -m mass_classification.corpus` (ou `mass-corpus`) pour
+inventorier des PDF/DOCX privés, préparer une annotation humaine et finaliser
+un manifeste compatible avec l'évaluateur. Aucun document n'est envoyé, aucun
+modèle n'est exécuté et aucune étiquette n'est déduite. **Tests écrits mais
+exécution différée à la demande de l'opérateur.** Voir le
+[protocole de préparation du corpus](../../docs/corpus-preparation.md).
+
 ## Routes utilisées par Harness
 
 | Route | Usage |
