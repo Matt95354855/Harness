@@ -72,8 +72,24 @@ function chunks<T>(items: T[], size: number): T[][] {
   return result;
 }
 
+function seededSample<T>(items: T[], count: number, seed: number): T[] {
+  const shuffled = [...items]; let state = seed >>> 0;
+  const random = (): number => {
+    state = (state + 0x6D2B79F5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[other]] = [shuffled[other]!, shuffled[index]!];
+  }
+  return shuffled.slice(0, count);
+}
+
 function usage(): void {
-  console.log(`DocLayNet adapter\n\nUsage:\n  npm run doclaynet:eval -- --limit 5 --endpoint http://127.0.0.1:8082/v1\n\nOptions:\n  --dataset PATH       Extracted DocLayNet root\n  --split SPLIT        train, validation, or test (default: test)\n  --start N            Image offset in the split (default: 0)\n  --limit N            Number of pages (default: 5)\n  --max-objects N      Objects per page (default: 12)\n  --objects-per-request N  Objects sent in one LLM call (default: 6)\n  --endpoint URL       OpenAI-compatible /v1 endpoint\n  --model ID           Served model ID (default: harness-local)\n  --max-tokens N       Completion token limit (default: 2400)\n  --attempts N         Attempts per request (default: 4)\n  --request-timeout-ms N  Timeout per request (default: 180000)\n  --health-wait-ms N  Wait for a restarting server (default: 30000)\n  --output PATH        JSON report/checkpoint path\n  --resume             Resume completed pages from --output\n  --mass               Also submit sampled PDFs to Mass Classification\n\nThe LLM task is text-plus-geometry layout classification. The local GGUF models are not vision models, so PNG pixels are deliberately not sent to the text endpoint.`);
+  console.log(`DocLayNet adapter\n\nUsage:\n  npm run doclaynet:eval -- --limit 5 --endpoint http://127.0.0.1:8082/v1\n\nOptions:\n  --dataset PATH       Extracted DocLayNet root\n  --split SPLIT        train, validation, or test (default: test)\n  --start N            Image offset in the split (default: 0)\n  --limit N            Number of pages (default: 5)\n  --sample N           Deterministically sample N random pages\n  --seed N             Seed used by --sample (default: 20261001)\n  --max-objects N      Objects per page (default: 12)\n  --objects-per-request N  Objects sent in one LLM call (default: 6)\n  --endpoint URL       OpenAI-compatible /v1 endpoint\n  --model ID           Served model ID (default: harness-local)\n  --max-tokens N       Completion token limit (default: 2400)\n  --attempts N         Attempts per request (default: 4)\n  --request-timeout-ms N  Timeout per request (default: 180000)\n  --health-wait-ms N  Wait for a restarting server (default: 30000)\n  --output PATH        JSON report/checkpoint path\n  --resume             Resume completed pages from --output\n  --mass               Also submit sampled PDFs to Mass Classification\n\nThe LLM task is text-plus-geometry layout classification. The local GGUF models are not vision models, so PNG pixels are deliberately not sent to the text endpoint.`);
 }
 
 function asObject(value: unknown, name: string): JsonObject {
@@ -207,7 +223,8 @@ async function main(): Promise<void> {
   const split = flag('split') ?? process.env.DOC_LAYNET_SPLIT ?? 'test';
   const splitFile = split === 'validation' ? 'val' : split;
   if (!['train', 'val', 'validation', 'test'].includes(split)) throw new Error('--split must be train, validation, or test');
-  const start = numberFlag('start', 0); const limit = numberFlag('limit', 5); const maxObjects = numberFlag('max-objects', 12);
+  const start = numberFlag('start', 0); const limit = numberFlag('limit', 5); const sample = numberFlag('sample', 0); const seed = numberFlag('seed', 20261001);
+  const selectionStart = sample > 0 ? 0 : start; const selectionLimit = sample > 0 ? sample : limit; const maxObjects = numberFlag('max-objects', 12);
   const objectsPerRequest = numberFlag('objects-per-request', 6, 1);
   const maxTokens = numberFlag('max-tokens', 2400, 128);
   const attempts = numberFlag('attempts', 4, 1);
@@ -219,13 +236,14 @@ async function main(): Promise<void> {
   const output = resolve(flag('output') ?? join('.harness', 'doclaynet', `${model}-${split}-${Date.now()}.json`));
   const resume = hasFlag('resume');
   const coco = await readJson<Coco>(join(dataset, 'COCO', `${splitFile}.json`));
-  const pages = coco.images.slice(start, start + limit);
+  if (sample > coco.images.length) throw new Error(`--sample cannot exceed the number of pages in the split (${coco.images.length})`);
+  const pages = sample > 0 ? seededSample(coco.images, sample, seed) : coco.images.slice(start, start + limit);
   if (!pages.length) throw new Error('No pages selected');
   const names = new Map(coco.categories.map(category => [category.id, category.name]));
   let existing: JsonObject | undefined;
   if (resume) {
     try { existing = await readJson<JsonObject>(output); } catch { existing = undefined; }
-    if (existing && (existing.dataset !== dataset || existing.split !== split || existing.start !== start || existing.limit !== limit || existing.model !== model || existing.endpoint !== endpoint)) {
+    if (existing && (existing.dataset !== dataset || existing.split !== split || existing.start !== selectionStart || existing.limit !== selectionLimit || existing.sample !== sample || existing.seed !== seed || existing.model !== model || existing.endpoint !== endpoint)) {
       throw new Error('--resume requires the same dataset, split, range, model, and endpoint as the existing report');
     }
   }
@@ -247,7 +265,7 @@ async function main(): Promise<void> {
   if (!availableModels.includes(model)) throw new Error(`Model ${model} is not served by ${endpoint}; available: ${availableModels.join(', ')}`);
   const checkpoint = (status: string): JsonObject => {
     const pageReports = pages.map(page => pageReportsById.get(page.id)).filter((page): page is JsonObject => Boolean(page));
-    return { version: 'doclaynet-llm-adapter:v1', status, dataset, split, start, limit, maxObjects, objectsPerRequest, maxTokens, attempts, requestTimeoutMs, healthWaitMs, endpoint, model, labels: LABELS, completedPages: pageReports.filter(isCompletedPage).length, totalPages: pages.length, metrics: metrics(rowsFromReports(pageReports)), pages: pageReports };
+    return { version: 'doclaynet-llm-adapter:v1', status, dataset, split, start: selectionStart, limit: selectionLimit, sample, seed, maxObjects, objectsPerRequest, maxTokens, attempts, requestTimeoutMs, healthWaitMs, endpoint, model, labels: LABELS, completedPages: pageReports.filter(isCompletedPage).length, totalPages: pages.length, metrics: metrics(rowsFromReports(pageReports)), pages: pageReports };
   };
   for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
     const page = pages[pageIndex]!;

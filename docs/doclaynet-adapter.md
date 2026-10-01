@@ -4,6 +4,16 @@ L’adaptateur compare un modèle local OpenAI-compatible aux annotations COCO d
 
 La campagne de référence du 1 octobre 2026 est documentée dans [`doclaynet-benchmark-2026-10-01.md`](doclaynet-benchmark-2026-10-01.md). Les commandes ci-dessous utilisent `npm.cmd`, recommandé sous PowerShell lorsque `npm.ps1` est bloqué par la stratégie d’exécution.
 
+Pour une campagne pratique de 500 pages aléatoires mais reproductibles, utiliser `--sample 500` avec un seed fixe. Le même seed reprend exactement les mêmes pages avec `--resume` :
+
+```powershell
+npm.cmd run doclaynet:eval -- --split test --sample 500 --seed 20261001 `
+  --max-objects 12 --objects-per-request 4 --max-tokens 1400 `
+  --attempts 4 --request-timeout-ms 180000 --health-wait-ms 30000 `
+  --retry-delay-ms 2000 --endpoint http://127.0.0.1:8080/v1 `
+  --model harness-local --output .harness/doclaynet/gpt-oss-random-500.json --resume
+```
+
 Depuis la racine de `harness` :
 
 ```powershell

@@ -176,6 +176,8 @@ npm.cmd run local:llm:qwen
 
 Les commandes stables, les paramètres de reprise et l’analyse des erreurs sont documentés dans [`docs/doclaynet-adapter.md`](docs/doclaynet-adapter.md) et [`docs/doclaynet-benchmark-2026-10-01.md`](docs/doclaynet-benchmark-2026-10-01.md).
 
+Pour une campagne courte, lancer 500 pages aléatoires reproductibles : `npm.cmd run doclaynet:eval -- --split test --sample 500 --seed 20261001 ...`. Le seed permet de reprendre exactement le même échantillon.
+
 ## Ce que le projet fournit
 
 | Fonction | Comportement |
